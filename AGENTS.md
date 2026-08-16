@@ -1,7 +1,10 @@
 # AGENTS.md
 
 ## Status
-The repository currently contains its initial documentation. No application seed test or project lint commands exist yet. do not invent commands. update this section when verified commands are implemented.
+M1 (Keywords CRUD) is **in progress, not complete**. Completed slice: database foundation — `src/db.php` (reusable PDO connection), `src/schema.php` (SQLite DDL), and `tests/db_foundation_test.php` (reusable acceptance checks). Verified commands:
+- Lint: `php -l src/db.php src/schema.php tests/db_foundation_test.php`
+- Tests: `php tests/db_foundation_test.php` (38 checks, exit 0 on pass)
+Not yet implemented: keyword add/edit/delete pages, POST actions, refresh (same-day UPSERT), seed, trend baseline, and list rendering. Update this section as milestones land.
 
 ## Project scope
 -MiniRank tracks keywords for one configured website.
