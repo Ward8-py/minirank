@@ -1,0 +1,21 @@
+
+
+
+# Environment
+.env
+.env.*
+
+
+# Logs
+logs/
+*.log
+
+
+# Editor/OS
+
+Thumbs.db
+
+
+# Data (keep directory structure)
+data/*
+!data/.gitkeep
