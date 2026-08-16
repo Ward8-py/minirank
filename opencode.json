@@ -17,8 +17,7 @@
       "php --version": "allow",
       "php -m": "allow",
       "php --modules": "allow",
-      "php -l *": "allow",
-      "php --lint *": "allow"
+      "php -l *": "allow"
     }
   }
 }
