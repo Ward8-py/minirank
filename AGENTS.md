@@ -2,11 +2,19 @@
 
 ## Status
 M1 (Keywords CRUD) is **in progress, not complete**. Completed slices: database foundation — `src/db.php` (reusable PDO connection), `src/schema.php` (SQLite DDL), and `tests/db_foundation_test.php` (reusable acceptance checks); deterministic seed and seven-day trend — `src/seed.php` (transactional `minirank_seed()`, `INSERT OR IGNORE`, 6 demo keywords x 30 consecutive days anchored to today), `src/trend.php` (`minirank_trend()` lower-is-better: improved/declined/stable/not enough history), `bin/seed.php` (idempotent CLI, generic error output), and `tests/seed_trend_test.php` (idempotence, no-overwrite, determinism, atomicity, trend cases, CLI smoke). Verified commands:
-- Lint: `php -l src/db.php src/schema.php src/seed.php src/trend.php bin/seed.php tests/db_foundation_test.php tests/seed_trend_test.php`
+- Lint: `php -l src/db.php`, `php -l src/schema.php`, `php -l src/seed.php`, `php -l src/trend.php`, `php -l bin/seed.php`, `php -l tests/db_foundation_test.php`, `php -l tests/seed_trend_test.php`
 - Tests: `php tests/db_foundation_test.php` (38 checks, exit 0 on pass)
 - Tests: `php tests/seed_trend_test.php` (37 checks, exit 0 on pass, no warnings, no leftover temp files)
 - CLI: `php bin/seed.php` (exit 0; rerun is a no-op; respects `MINIRANK_DB_PATH`; failure prints only "Seed failed.")
-Not yet implemented: keyword add/edit/delete pages, POST actions, refresh (same-day UPSERT), and list rendering. Update this section as milestones land.
+Not yet implemented: keyword add/edit/delete pages, POST actions, and refresh (same-day UPSERT). Update this section as milestones land.
+
+M4 (Keyword list & search) is **complete**. Completed slices: `public/index.php` (GET list + case-insensitive search page with escaped output and generic 500 on unexpected failures), `config.php` (site name/URL for the one configured website), `src/list.php` (`minirank_search_keywords()` with single-query current+baseline via correlated subqueries, `%`/`_`/`\` LIKE escaping, `minirank_render_search()`/`minirank_render_list()` escaping helpers), `src/trend.php` (extracted pure `minirank_trend_from_positions()`, reused by `minirank_trend()`), `public/style.css` (minimal), and `tests/list_test.php`. Verified commands:
+- Lint: `php -l src/trend.php`, `php -l src/list.php`, `php -l config.php`, `php -l public/index.php`, `php -l tests/list_test.php`
+- Tests: `php tests/db_foundation_test.php` (38 checks, exit 0)
+- Tests: `php tests/seed_trend_test.php` (37 checks, exit 0, no warnings, no leftover temp files)
+- Tests: `php tests/list_test.php` (35 checks, exit 0)
+- Smoke: PHP built-in server against seeded DB (blank page, search filter, injection inert, array query param, and unopenable-DB generic 500 with no leaked details)
+Pagination and sorting are out of scope for M4 per the candidate brief. CRUD actions and refresh (same-day UPSERT) remain future work. Update this section as milestones land.
 
 ## Project scope
 -MiniRank tracks keywords for one configured website.

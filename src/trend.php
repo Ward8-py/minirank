@@ -32,13 +32,8 @@ function minirank_current_position(PDO $pdo, int $keywordId): ?int
     return $value === false ? null : (int) $value;
 }
 
-function minirank_trend(PDO $pdo, int $keywordId, ?string $today = null): array
+function minirank_trend_from_positions(?int $current, ?int $baseline): array
 {
-    $today = $today ?? date('Y-m-d');
-    $current = minirank_current_position($pdo, $keywordId);
-    $baselineDate = date('Y-m-d', strtotime($today . ' -7 days'));
-    $baseline = minirank_position_on_or_before($pdo, $keywordId, $baselineDate);
-
     if ($current === null || $baseline === null) {
         return [
             'direction' => MINIRANK_TREND_STABLE,
@@ -62,4 +57,14 @@ function minirank_trend(PDO $pdo, int $keywordId, ?string $today = null): array
         'baseline' => $baseline,
         'not_enough_history' => false,
     ];
+}
+
+function minirank_trend(PDO $pdo, int $keywordId, ?string $today = null): array
+{
+    $today = $today ?? date('Y-m-d');
+    $current = minirank_current_position($pdo, $keywordId);
+    $baselineDate = date('Y-m-d', strtotime($today . ' -7 days'));
+    $baseline = minirank_position_on_or_before($pdo, $keywordId, $baselineDate);
+
+    return minirank_trend_from_positions($current, $baseline);
 }
