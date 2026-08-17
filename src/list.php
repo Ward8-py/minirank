@@ -70,6 +70,17 @@ function minirank_render_search(string $query): string
         . '</form>';
 }
 
+function minirank_render_add_form(string $csrfToken): string
+{
+    $token = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+    return '<form method="post" action="actions/keyword-create.php" class="add-form">'
+        . '<label for="phrase">Add a keyword</label>'
+        . '<input type="hidden" name="csrf_token" value="' . $token . '">'
+        . '<input type="text" id="phrase" name="phrase" maxlength="120" required autocomplete="off">'
+        . '<button type="submit">Add keyword</button>'
+        . '</form>';
+}
+
 function minirank_render_list(array $rows): string
 {
     if ($rows === []) {

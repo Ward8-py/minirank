@@ -14,9 +14,12 @@ try {
 
     require_once __DIR__ . '/../src/db.php';
     require_once __DIR__ . '/../src/list.php';
+    require_once __DIR__ . '/../src/session.php';
 
     $query = isset($_GET['q']) && is_string($_GET['q']) ? trim($_GET['q']) : '';
     $rows = minirank_search_keywords(minirank_db(), $query);
+    $csrfToken = minirank_csrf_token();
+    $flash = minirank_flash_pull();
 } catch (Throwable $e) {
     header('HTTP/1.1 500 Internal Server Error');
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -41,6 +44,8 @@ try {
         <?php } ?>
     </header>
     <main>
+        <?= minirank_flash_render($flash) ?>
+        <?= minirank_render_add_form($csrfToken) ?>
         <?= minirank_render_search($query) ?>
         <?= minirank_render_list($rows) ?>
     </main>
