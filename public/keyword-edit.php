@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-function minirank_detail_404(): void
+function minirank_edit_404(): void
 {
     header('HTTP/1.1 404 Not Found');
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -30,16 +30,15 @@ try {
 
     $id = minirank_parse_id($_GET['id'] ?? null);
     if ($id === null) {
-        minirank_detail_404();
+        minirank_edit_404();
     }
 
     $db = minirank_db();
     $keyword = minirank_find_keyword($db, $id);
     if ($keyword === null) {
-        minirank_detail_404();
+        minirank_edit_404();
     }
 
-    $history = minirank_position_history($db, $id);
     $csrfToken = minirank_csrf_token();
     $flash = minirank_flash_pull();
 } catch (Throwable $e) {
@@ -55,23 +54,20 @@ try {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($keyword['phrase'], ENT_QUOTES, 'UTF-8') ?> &middot; <?= htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') ?></title>
+    <title>Edit keyword &middot; <?= htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <p class="back"><a href="index.php">&larr; Back to keywords</a></p>
-        <h1><?= htmlspecialchars($keyword['phrase'], ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="added">Added on <?= htmlspecialchars($keyword['created_at'], ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="back"><a href="keyword.php?id=<?= (int) $keyword['id'] ?>">&larr; Back to keyword</a></p>
+        <h1>Edit keyword</h1>
+        <?php if ($siteUrl !== '#') { ?>
+            <p class="site-url"><a href="<?= htmlspecialchars($siteUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($siteUrl, ENT_QUOTES, 'UTF-8') ?></a></p>
+        <?php } ?>
     </header>
     <main>
         <?= minirank_flash_render($flash) ?>
-        <div class="actions">
-            <a href="keyword-edit.php?id=<?= (int) $keyword['id'] ?>" class="edit-link">Edit keyword</a>
-            <?= minirank_render_delete_form($keyword, $csrfToken) ?>
-        </div>
-        <h2>Position history</h2>
-        <?= minirank_render_history($history) ?>
+        <?= minirank_render_edit_form($keyword, $csrfToken) ?>
     </main>
 </body>
 </html>

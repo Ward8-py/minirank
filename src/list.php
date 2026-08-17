@@ -81,6 +81,32 @@ function minirank_render_add_form(string $csrfToken): string
         . '</form>';
 }
 
+function minirank_render_edit_form(array $keyword, string $csrfToken): string
+{
+    $id = (int) $keyword['id'];
+    $phrase = htmlspecialchars((string) $keyword['phrase'], ENT_QUOTES, 'UTF-8');
+    $token = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+    return '<form method="post" action="actions/keyword-update.php" class="add-form">'
+        . '<label for="phrase">Edit keyword</label>'
+        . '<input type="hidden" name="id" value="' . $id . '">'
+        . '<input type="hidden" name="csrf_token" value="' . $token . '">'
+        . '<input type="text" id="phrase" name="phrase" value="' . $phrase
+        . '" maxlength="120" required autocomplete="off">'
+        . '<button type="submit">Save changes</button>'
+        . '</form>';
+}
+
+function minirank_render_delete_form(array $keyword, string $csrfToken): string
+{
+    $id = (int) $keyword['id'];
+    $token = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+    return '<form method="post" action="actions/keyword-delete.php" class="delete-form">'
+        . '<input type="hidden" name="id" value="' . $id . '">'
+        . '<input type="hidden" name="csrf_token" value="' . $token . '">'
+        . '<button type="submit" class="btn-danger">Delete keyword</button>'
+        . '</form>';
+}
+
 function minirank_render_list(array $rows): string
 {
     if ($rows === []) {

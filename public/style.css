@@ -122,3 +122,28 @@ table.history {
 .no-results {
   color: #57606a;
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.edit-link {
+  color: #0969da;
+  text-decoration: none;
+}
+
+.delete-form {
+  margin: 0;
+}
+
+.btn-danger {
+  padding: 0.35rem 0.75rem;
+  background: #fff;
+  color: #cf222e;
+  border: 1px solid #cf222e;
+  border-radius: 6px;
+  cursor: pointer;
+}

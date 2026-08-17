@@ -89,12 +89,17 @@ function minirank_validate_phrase(string $phrase): array
     return ['ok' => true, 'phrase' => $phrase, 'error' => null];
 }
 
-function minirank_keyword_exists(PDO $pdo, string $phrase): bool
+function minirank_keyword_exists(PDO $pdo, string $phrase, ?int $excludeId = null): bool
 {
-    $stmt = $pdo->prepare(
-        'SELECT 1 FROM keywords WHERE phrase = :phrase COLLATE NOCASE LIMIT 1'
-    );
-    $stmt->execute([':phrase' => $phrase]);
+    $sql = 'SELECT 1 FROM keywords WHERE phrase = :phrase COLLATE NOCASE';
+    $params = [':phrase' => $phrase];
+    if ($excludeId !== null) {
+        $sql .= ' AND id != :exclude_id';
+        $params[':exclude_id'] = $excludeId;
+    }
+    $sql .= ' LIMIT 1';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     return $stmt->fetchColumn() !== false;
 }
 
@@ -118,4 +123,36 @@ function minirank_create_keyword(PDO $pdo, string $phrase): array
         throw $e;
     }
     return ['ok' => true, 'id' => (int) $pdo->lastInsertId(), 'error' => null];
+}
+
+function minirank_update_keyword(PDO $pdo, int $id, string $phrase): array
+{
+    if (minirank_find_keyword($pdo, $id) === null) {
+        return ['ok' => false, 'id' => $id, 'error' => 'Keyword not found.', 'not_found' => true];
+    }
+    $validated = minirank_validate_phrase($phrase);
+    if (!$validated['ok']) {
+        return ['ok' => false, 'id' => $id, 'error' => $validated['error'], 'not_found' => false];
+    }
+    $phrase = $validated['phrase'];
+    if (minirank_keyword_exists($pdo, $phrase, $id)) {
+        return ['ok' => false, 'id' => $id, 'error' => 'That keyword already exists.', 'not_found' => false];
+    }
+    try {
+        $stmt = $pdo->prepare('UPDATE keywords SET phrase = :phrase WHERE id = :id');
+        $stmt->execute([':phrase' => $phrase, ':id' => $id]);
+    } catch (PDOException $e) {
+        if ((int) $e->getCode() === 23000) {
+            return ['ok' => false, 'id' => $id, 'error' => 'That keyword already exists.', 'not_found' => false];
+        }
+        throw $e;
+    }
+    return ['ok' => true, 'id' => $id, 'error' => null, 'not_found' => false];
+}
+
+function minirank_delete_keyword(PDO $pdo, int $id): bool
+{
+    $stmt = $pdo->prepare('DELETE FROM keywords WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+    return $stmt->rowCount() > 0;
 }
