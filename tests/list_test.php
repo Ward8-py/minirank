@@ -171,6 +171,24 @@ report(strpos($searchHtml, '<script>alert') === false, 'raw script tag absent fr
 report(strpos($searchHtml, '&lt;script&gt;alert') !== false, 'search value escaped in rendered search box');
 report(strpos($searchHtml, 'value="') !== false, 'search box renders a value attribute');
 
+$linkRows = minirank_search_keywords($db, 'seo', $today);
+$linkHtml = minirank_render_list($linkRows);
+report(
+    strpos($linkHtml, 'keyword.php?id=' . $linkRows[0]['id']) !== false,
+    'rendered list links each keyword phrase to its detail page'
+);
+report(
+    strpos($linkHtml, '<a href="keyword.php?id=' . $linkRows[0]['id'] . '">seo tools</a>') !== false,
+    'detail link wraps the escaped keyword phrase'
+);
+$linkRows = minirank_search_keywords($db, 'script', $today);
+$linkHtml = minirank_render_list($linkRows);
+report(
+    strpos($linkHtml, 'keyword.php?id=' . $linkRows[0]['id']) !== false
+        && strpos($linkHtml, '&lt;script&gt;alert') !== false,
+    'detail link uses int id and escapes a hostile phrase'
+);
+
 $emptyHtml = minirank_render_list([]);
 report(strpos($emptyHtml, 'No keywords match your search.') !== false, 'empty list renders no-results message');
 report(strpos($emptyHtml, '<table') === false, 'empty list renders no table');

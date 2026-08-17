@@ -16,6 +16,15 @@ M4 (Keyword list & search) is **complete**. Completed slices: `public/index.php`
 - Smoke: PHP built-in server against seeded DB (blank page, search filter, injection inert, array query param, and unopenable-DB generic 500 with no leaked details)
 Pagination and sorting are out of scope for M4 per the candidate brief. CRUD actions and refresh (same-day UPSERT) remain future work. Update this section as milestones land.
 
+M5 (Keyword detail) is **complete**. Completed slices: `public/keyword.php` (GET detail page with a safe 404 for missing/invalid/array/negative/zero/unknown ids and a generic 500 on unexpected failures), `src/keyword.php` (`minirank_parse_id()` strict positive-int parsing, `minirank_find_keyword()`, `minirank_position_history()` newest-first, `minirank_render_history()` escaping helper with an empty state), `src/list.php` (list phrases now link to the detail page), `public/style.css` (.history table styles), and `tests/keyword_test.php` + `tests/keyword_smoke_test.php` (HTTP smoke via the PHP built-in server; deleted-keyword id is tested separately from a never-existing id). Verified commands:
+- Lint: `php -l src/keyword.php`, `php -l public/keyword.php`, `php -l src/list.php`, `php -l tests/keyword_test.php`, `php -l tests/keyword_smoke_test.php`, `php -l tests/list_test.php`
+- Tests: `php tests/db_foundation_test.php` (38 checks, exit 0)
+- Tests: `php tests/seed_trend_test.php` (37 checks, exit 0, no warnings, no leftover temp files)
+- Tests: `php tests/list_test.php` (38 checks, exit 0)
+- Tests: `php tests/keyword_test.php` (30 checks, exit 0, no leftover temp files)
+- Tests: `php tests/keyword_smoke_test.php` (26 checks, exit 0; HTTP: safe 404 for missing/`abc`/`-5`/`0`/`999999`/array/deleted id, newest-first history, 30-row seeded history, empty state, escaped hostile phrase, generic 500 with no leaked details; no leftover temp files or stray processes)
+CRUD actions and refresh (same-day UPSERT) remain future work. Update this section as milestones land.
+
 ## Project scope
 -MiniRank tracks keywords for one configured website.
 -Complete and verify M1–M8 before attempting another stretch goal.

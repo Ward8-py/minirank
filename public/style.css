@@ -21,6 +21,11 @@ h1 {
   color: #0969da;
 }
 
+.back a {
+  color: #0969da;
+  text-decoration: none;
+}
+
 .search {
   margin: 1.5rem 0;
 }
@@ -44,16 +49,24 @@ table.keywords {
 }
 
 table.keywords th,
-table.keywords td {
+table.keywords td,
+table.history th,
+table.history td {
   text-align: left;
   padding: 0.5rem;
   border-bottom: 1px solid #d8dee4;
 }
 
-table.keywords th {
+table.keywords th,
+table.history th {
   font-size: 0.85rem;
   text-transform: uppercase;
   color: #57606a;
+}
+
+table.history {
+  border-collapse: collapse;
+  width: 100%;
 }
 
 .trend-improved {

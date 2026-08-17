@@ -84,6 +84,7 @@ function minirank_render_list(array $rows): string
 
     foreach ($rows as $row) {
         $phrase = htmlspecialchars((string) $row['phrase'], ENT_QUOTES, 'UTF-8');
+        $detailUrl = 'keyword.php?id=' . (int) $row['id'];
         $current = htmlspecialchars(
             $row['current_position'] === null ? '—' : (string) $row['current_position'],
             ENT_QUOTES,
@@ -94,7 +95,7 @@ function minirank_render_list(array $rows): string
             ? $direction . ' (not enough history)'
             : $direction;
         $html .= '<tr>'
-            . '<td>' . $phrase . '</td>'
+            . '<td><a href="' . $detailUrl . '">' . $phrase . '</a></td>'
             . '<td class="position">' . $current . '</td>'
             . '<td class="trend-' . $direction . '">'
             . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</td>'
