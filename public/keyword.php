@@ -68,6 +68,7 @@ try {
         <?= minirank_flash_render($flash) ?>
         <div class="actions">
             <a href="keyword-edit.php?id=<?= (int) $keyword['id'] ?>" class="edit-link">Edit keyword</a>
+            <a href="export.php?id=<?= (int) $keyword['id'] ?>" class="edit-link">Export CSV</a>
             <?= minirank_render_delete_form($keyword, $csrfToken) ?>
         </div>
         <h2>Position history</h2>
