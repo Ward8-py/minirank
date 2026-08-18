@@ -74,6 +74,92 @@ function minirank_render_history(array $rows): string
     return $html . '</tbody></table>';
 }
 
+const MINIRANK_CHART_WIDTH = 340;
+const MINIRANK_CHART_HEIGHT = 170;
+const MINIRANK_CHART_PAD_LEFT = 24;
+const MINIRANK_CHART_PAD_RIGHT = 8;
+const MINIRANK_CHART_PAD_TOP = 14;
+const MINIRANK_CHART_PAD_BOTTOM = 14;
+
+function minirank_chart_points(array $rows): array
+{
+    if ($rows === []) {
+        return [];
+    }
+    $rows = array_reverse($rows);
+    $count = count($rows);
+    $plotWidth = MINIRANK_CHART_WIDTH - MINIRANK_CHART_PAD_LEFT - MINIRANK_CHART_PAD_RIGHT;
+    $plotHeight = MINIRANK_CHART_HEIGHT - MINIRANK_CHART_PAD_TOP - MINIRANK_CHART_PAD_BOTTOM;
+
+    $points = [];
+    foreach ($rows as $index => $row) {
+        $position = (int) $row['position'];
+        $x = $count === 1
+            ? MINIRANK_CHART_PAD_LEFT + ($plotWidth / 2)
+            : MINIRANK_CHART_PAD_LEFT + ($index * $plotWidth / ($count - 1));
+        $y = MINIRANK_CHART_PAD_TOP + (($position - 1) * $plotHeight / 99);
+        $points[] = [
+            'x' => round($x, 1),
+            'y' => round($y, 1),
+            'position' => $position,
+        ];
+    }
+    return $points;
+}
+
+function minirank_render_chart(array $rows): string
+{
+    $points = minirank_chart_points($rows);
+    if ($points === []) {
+        return '';
+    }
+
+    $oldest = isset($rows[count($rows) - 1]['recorded_on'])
+        ? (string) $rows[count($rows) - 1]['recorded_on']
+        : '';
+    $newest = isset($rows[0]['recorded_on'])
+        ? (string) $rows[0]['recorded_on']
+        : '';
+    $caption = 'Position history &middot; lower is better (1 is best).';
+    if ($oldest !== '' && $newest !== '') {
+        $caption .= ' ' . htmlspecialchars($oldest, ENT_QUOTES, 'UTF-8')
+            . ' &rarr; ' . htmlspecialchars($newest, ENT_QUOTES, 'UTF-8') . '.';
+    }
+
+    $topY = MINIRANK_CHART_PAD_TOP;
+    $bottomY = MINIRANK_CHART_HEIGHT - MINIRANK_CHART_PAD_BOTTOM;
+    $plotLeft = MINIRANK_CHART_PAD_LEFT;
+    $plotRight = MINIRANK_CHART_WIDTH - MINIRANK_CHART_PAD_RIGHT;
+
+    $html = '<figure class="chart">'
+        . '<figcaption class="chart-caption">' . $caption . '</figcaption>'
+        . '<svg class="chart-svg" viewBox="0 0 ' . MINIRANK_CHART_WIDTH . ' ' . MINIRANK_CHART_HEIGHT . '"'
+        . ' role="img" aria-label="Line chart of keyword positions over time; position 1 is best">'
+        . '<line class="chart-grid" x1="' . $plotLeft . '" y1="' . $topY . '"'
+        . ' x2="' . $plotRight . '" y2="' . $topY . '"/>'
+        . '<line class="chart-grid" x1="' . $plotLeft . '" y1="' . $bottomY . '"'
+        . ' x2="' . $plotRight . '" y2="' . $bottomY . '"/>'
+        . '<text class="chart-axis" x="4" y="' . ($topY + 4) . '">1</text>'
+        . '<text class="chart-axis" x="4" y="' . ($bottomY - 4) . '">100</text>';
+
+    if (count($points) === 1) {
+        $html .= '<circle class="chart-dot" cx="' . $points[0]['x'] . '"'
+            . ' cy="' . $points[0]['y'] . '" r="2.5"/>';
+    } else {
+        $coords = [];
+        foreach ($points as $point) {
+            $coords[] = $point['x'] . ',' . $point['y'];
+        }
+        $html .= '<polyline class="chart-line" points="' . implode(' ', $coords) . '"/>';
+        foreach ($points as $point) {
+            $html .= '<circle class="chart-dot" cx="' . $point['x'] . '"'
+                . ' cy="' . $point['y'] . '" r="2.5"/>';
+        }
+    }
+
+    return $html . '</svg></figure>';
+}
+
 function minirank_validate_phrase(string $phrase): array
 {
     $phrase = trim($phrase);

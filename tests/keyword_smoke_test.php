@@ -221,6 +221,28 @@ report(
 );
 report(substr_count($table, '<td class="position">') === 30, 'seeded keyword shows 30 position rows');
 
+echo "\n## Smoke: chart on the detail page\n";
+report(strpos($body, '<figure class="chart">') !== false, 'seeded detail page renders a chart figure');
+report(strpos($body, '<svg class="chart-svg"') !== false, 'seeded detail page renders an SVG chart');
+$chartStart = strpos($body, '<svg class="chart-svg"');
+$chartEnd = strpos($body, '</svg>');
+$chart = $chartStart !== false && $chartEnd !== false && $chartEnd > $chartStart
+    ? substr($body, $chartStart, $chartEnd - $chartStart)
+    : '';
+report(
+    strpos($chart, '>1</text>') !== false && strpos($chart, '>100</text>') !== false,
+    'chart shows visible 1 and 100 axis labels'
+);
+report(substr_count($chart, '<line class="chart-grid"') === 2, 'chart shows gridlines at positions 1 and 100');
+report(substr_count($chart, '<polyline') === 1, 'chart has a single polyline');
+$chartPoints = [];
+if (preg_match('/points="([^"]+)"/', $chart, $pm) === 1) {
+    $chartPoints = explode(' ', $pm[1]);
+}
+report(count($chartPoints) === 30, 'chart polyline has one point per seeded day (30 points)');
+report(substr_count($chart, '<circle class="chart-dot"') === 30, 'chart draws one dot per point (30 dots)');
+report(strpos($chart, '<table') === false, 'chart markup contains no table');
+
 [$status, $body] = httpGetRetry($base . '/keyword.php?id=' . $noHistoryId);
 report($status === 200, 'keyword with no history responds 200');
 report(
@@ -228,11 +250,14 @@ report(
     'no-history keyword shows empty state message'
 );
 report(strpos($body, '<table') === false, 'no-history keyword renders no table');
+report(strpos($body, '<svg') === false, 'no-history keyword renders no chart');
 
 [$status, $body] = httpGetRetry($base . '/keyword.php?id=' . $xssId);
 report($status === 200, 'hostile-phrase keyword responds 200');
 report(strpos($body, '<script>alert') === false, 'raw script tag absent from detail page');
 report(strpos($body, '&lt;script&gt;alert') !== false, 'hostile phrase is escaped in detail page');
+report(substr_count($body, '<circle class="chart-dot"') === 1, 'single-position keyword renders exactly one dot');
+report(strpos($body, '<polyline') === false, 'single-position keyword renders no polyline');
 
 echo "\n## Smoke: safe 404s\n";
 [$status, $body] = httpGetRetry($base . '/keyword.php');

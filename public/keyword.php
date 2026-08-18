@@ -71,6 +71,7 @@ try {
             <?= minirank_render_delete_form($keyword, $csrfToken) ?>
         </div>
         <h2>Position history</h2>
+        <?= minirank_render_chart($history) ?>
         <?= minirank_render_history($history) ?>
     </main>
 </body>
