@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${MINIRANK_PORT:-8000}:8000"
+    environment:
+      MINIRANK_DB_PATH: /app/data/minirank.sqlite
+    volumes:
+      - minirank-data:/app/data
+
+volumes:
+  minirank-data:

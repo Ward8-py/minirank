@@ -26,6 +26,30 @@ php -S 127.0.0.1:8000 -t public
 
 Open http://localhost:8000 — six keywords with 30 days of demo history, plus search, add/edit/delete, and one-click refresh. `php bin/seed.php` is idempotent and safe to rerun.
 
+## Run it with Docker
+
+Requires Docker with the Compose plugin.
+
+```sh
+docker compose up -d --build
+```
+
+Open http://localhost:8000 — the container runs PHP 8.0 (the image build verifies the `pdo_sqlite` and `session` extensions) and seeds the six demo keywords on first boot. If port 8000 is already in use:
+
+```sh
+MINIRANK_PORT=8080 docker compose up -d --build
+```
+
+The SQLite database lives in a Docker named volume (`minirank-data`), not in the repo, so it survives restarts without committing a database file:
+
+```sh
+docker compose restart   # data survives
+docker compose down      # stops the app; the volume and data survive
+docker compose down -v   # also deletes the volume — data is lost
+```
+
+Seeding runs only when the seed marker is absent or the database is missing/empty; a failed first-boot seed is retried on the next start, and ordinary restarts never restore data you deleted. The native PHP setup (`php bin/seed.php && php -S 127.0.0.1:8000 -t public`) is unchanged.
+
 ## Tests
 
 Each `tests/*.php` file is a standalone script that prints PASS/FAIL and exits 0 on success:

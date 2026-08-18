@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+logs
+data
+tests
+*.md
+opencode.json
+process.html
