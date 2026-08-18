@@ -4,6 +4,22 @@
   --stable: #57606a;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+h1,
+.site-url a,
+.alert,
+table.keywords th,
+table.keywords td,
+table.history th,
+table.history td {
+  overflow-wrap: anywhere;
+}
+
 body {
   font-family: system-ui, sans-serif;
   max-width: 720px;
@@ -166,4 +182,78 @@ table.history {
   border: 1px solid #cf222e;
   border-radius: 6px;
   cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  body {
+    margin-top: 1rem;
+  }
+
+  .add-form input[type="text"],
+  .search input[type="text"] {
+    width: 100%;
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  .add-form button,
+  .search button,
+  .refresh-control button,
+  .btn-danger {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .refresh-control {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .refresh-control span {
+    min-width: 0;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .actions .edit-link {
+    display: block;
+    text-align: center;
+    padding: 0.6rem 0.75rem;
+    min-height: 44px;
+  }
+
+  table.keywords,
+  table.history {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  table.keywords th:nth-child(1),
+  table.keywords td:nth-child(1) {
+    width: 44%;
+  }
+
+  table.keywords th:nth-child(2),
+  table.keywords td:nth-child(2) {
+    width: 20%;
+  }
+
+  table.keywords th:nth-child(3),
+  table.keywords td:nth-child(3) {
+    width: 36%;
+  }
+
+  table.history th:nth-child(1),
+  table.history td:nth-child(1) {
+    width: 55%;
+  }
+
+  table.history th:nth-child(2),
+  table.history td:nth-child(2) {
+    width: 45%;
+  }
 }
