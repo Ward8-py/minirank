@@ -1,505 +1,1038 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MiniRank — Process Document</title>
-<style>
-  :root {
-    --ink: #1f2430;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --accent: #1d4ed8;
-    --code-bg: #f4f5f7;
-    --ok: #15803d;
-    --bad: #b91c1c;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: var(--ink);
-    line-height: 1.6;
-    background: #fafafa;
-  }
-  header.hero {
-    padding: 3rem 1.5rem 2.5rem;
-    background: #111827;
-    color: #fff;
-  }
-  header.hero h1 { margin: 0 0 0.25rem; font-size: 1.75rem; }
-  header.hero p { margin: 0; color: #9ca3af; }
-  main { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
-  section { margin-bottom: 3.5rem; }
-  h2 {
-    font-size: 1.35rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--accent);
-  }
-  h3 { font-size: 1.05rem; margin-top: 2rem; }
-  h4 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; }
-  p { margin: 0.6rem 0; }
-  ul, ol { margin: 0.6rem 0; padding-left: 1.4rem; }
-  li { margin: 0.35rem 0; }
-  code, pre {
-    font-family: "SF Mono", Consolas, "Courier New", monospace;
-    font-size: 0.9em;
-  }
-  code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
-  pre {
-    background: var(--code-bg);
-    padding: 0.9rem 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    border: 1px solid var(--line);
-  }
-  pre code { background: none; padding: 0; }
-  blockquote {
-    margin: 1rem 0;
-    padding: 0.75rem 1rem;
-    border-left: 4px solid var(--line);
-    background: var(--code-bg);
-    border-radius: 0 8px 8px 0;
-    color: #374151;
-    font-size: 0.92em;
-  }
-  .prompt { margin-bottom: 2.2rem; }
-  .label {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 0.2em 0.7em;
-    border-radius: 999px;
-    margin-bottom: 0.4rem;
-  }
-  .label.ok { background: #dcfce7; color: var(--ok); }
-  .label.fail { background: #fee2e2; color: var(--bad); }
-  .mistake { border-left: 4px solid var(--bad); background: #fef2f2; border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; margin: 1rem 0; }
-  .caught { border-left: 4px solid var(--accent); background: #eff6ff; border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; margin: 1rem 0; }
-  .fix { border-left: 4px solid var(--ok); background: #f0fdf4; border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; margin: 1rem 0; }
-  .grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-  @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
-  .card { border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.25rem; background: #fff; }
-  .card h4 { margin-top: 0; }
-  .muted { color: var(--muted); }
-  .small { font-size: 0.85rem; }
-  .tree { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; font-family: "SF Mono", Consolas, monospace; font-size: 0.88em; overflow-x: auto; line-height: 1.7; }
-  .session { border: 1px solid var(--line); border-radius: 10px; margin: 0.8rem 0; background: #fff; }
-  .session summary { cursor: pointer; padding: 0.9rem 1.25rem; font-size: 1rem; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-  .session summary::-webkit-details-marker { display: none; }
-  .session summary::after { content: "\25B8"; color: var(--accent); flex-shrink: 0; font-size: 0.85em; }
-  .session[open] summary::after { content: "\25BE"; }
-  .session summary a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
-  .session summary a:hover { color: var(--accent); }
-  .session .reveal { padding: 0 1.25rem 1.1rem; border-top: 1px solid var(--line); }
-  .session .meta { font-size: 0.82rem; color: var(--muted); margin: 0.8rem 0 0.6rem; }
-  .session .body { font-size: 0.92em; }
-  .session .body p { margin: 0.5rem 0; }
-  .session .lessons { border-top: 1px dashed var(--line); margin-top: 0.6rem; padding-top: 0.6rem; }
-  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
-  th, td { border: 1px solid var(--line); padding: 0.5rem 0.7rem; text-align: left; vertical-align: top; }
-  th { background: var(--code-bg); }
-  footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding-bottom: 2.5rem; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniRank — Process Document</title>
+  <style>
+    :root {
+      --ink: #1f2430;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #1d4ed8;
+      --code-bg: #f4f5f7;
+      --ok: #15803d;
+      --bad: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      line-height: 1.6;
+      background: #fafafa;
+    }
+
+    header.hero {
+      padding: 3rem 1.5rem 2.5rem;
+      background: #111827;
+      color: #fff;
+    }
+
+    header.hero h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.75rem;
+    }
+
+    header.hero p {
+      margin: 0;
+      color: #9ca3af;
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    section {
+      margin-bottom: 3.5rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      margin-top: 2rem;
+    }
+
+    h4 {
+      font-size: 0.95rem;
+      margin: 1.5rem 0 0.5rem;
+    }
+
+    p {
+      margin: 0.6rem 0;
+    }
+
+    ul,
+    ol {
+      margin: 0.6rem 0;
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin: 0.35rem 0;
+    }
+
+    code,
+    pre {
+      font-family: "SF Mono", Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+    }
+
+    code {
+      background: var(--code-bg);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      padding: 0.9rem 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+    }
+
+    blockquote {
+      margin: 1rem 0;
+      padding: 0.75rem 1rem;
+      border-left: 4px solid var(--line);
+      background: var(--code-bg);
+      border-radius: 0 8px 8px 0;
+      color: #374151;
+      font-size: 0.92em;
+    }
+
+    .prompt {
+      margin-bottom: 2.2rem;
+    }
+
+    .label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2em 0.7em;
+      border-radius: 999px;
+      margin-bottom: 0.4rem;
+    }
+
+    .label.ok {
+      background: #dcfce7;
+      color: var(--ok);
+    }
+
+    .label.fail {
+      background: #fee2e2;
+      color: var(--bad);
+    }
+
+    .mistake {
+      border-left: 4px solid var(--bad);
+      background: #fef2f2;
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+    }
+
+    .caught {
+      border-left: 4px solid var(--accent);
+      background: #eff6ff;
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+    }
+
+    .fix {
+      border-left: 4px solid var(--ok);
+      background: #f0fdf4;
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      background: #fff;
+    }
+
+    .card h4 {
+      margin-top: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 0.85rem;
+    }
+
+    .tree {
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      font-family: "SF Mono", Consolas, monospace;
+      font-size: 0.88em;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    .session {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin: 0.8rem 0;
+      background: #fff;
+    }
+
+    .session summary {
+      cursor: pointer;
+      padding: 0.9rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 700;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .session summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .session summary::after {
+      content: "\25B8";
+      color: var(--accent);
+      flex-shrink: 0;
+      font-size: 0.85em;
+    }
+
+    .session[open] summary::after {
+      content: "\25BE";
+    }
+
+    .session summary a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent);
+    }
+
+    .session summary a:hover {
+      color: var(--accent);
+    }
+
+    .session .reveal {
+      padding: 0 1.25rem 1.1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .session .meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 0.8rem 0 0.6rem;
+    }
+
+    .session .body {
+      font-size: 0.92em;
+    }
+
+    .session .body p {
+      margin: 0.5rem 0;
+    }
+
+    .session .lessons {
+      border-top: 1px dashed var(--line);
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.92em;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 0.5rem 0.7rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--code-bg);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding-bottom: 2.5rem;
+    }
+  </style>
 </head>
+
 <body>
 
-<header class="hero">
-  <h1>MiniRank — Process Document</h1>
-  <p>How MiniRank was built with an agent across thirteen sessions: the plan, the prompts that mattered, the full session log, and what I'd do differently.</p>
-</header>
+  <header class="hero">
+    <h1>MiniRank — Process Document</h1>
+    <p>How MiniRank was built with an agent across eighteen sessions: the plan, the prompts that mattered, the full
+      session log, and what I'd do differently.</p>
+  </header>
 
-<main>
+  <main>
 
-<!-- ============================================================ -->
-<section id="plan">
-  <h2>1. Plan</h2>
+    <!-- ============================================================ -->
+    <section id="plan">
+      <h2>1. Plan</h2>
 
-  <p>MiniRank tracks keyword rankings for one configured website: PHP 8 + SQLite, plain server-rendered HTML, CSS and vanilla JS, no framework, no package manager, no extra dependencies. Every milestone was planned in advance with the agent and verified against acceptance checks before being marked complete.</p>
+      <p>MiniRank tracks keyword rankings for one configured website: PHP 8 + SQLite, plain server-rendered HTML, CSS
+        and vanilla JS, no framework, no package manager, no extra dependencies. Every milestone was planned in advance
+        with the agent and verified against acceptance checks before being marked complete.</p>
 
-  <h3>Key decisions</h3>
+      <h3>Key decisions</h3>
 
-  <div class="grid">
-    <div class="card">
-      <h4>Routing: split entry/action pattern</h4>
+      <div class="grid">
+        <div class="card">
+          <h4>Routing: split entry/action pattern</h4>
+          <ul>
+            <li><strong>GET entry files</strong> (public pages): <code>public/index.php</code> (list + search),
+              <code>public/keyword.php</code> (detail, <code>?id=</code>).</li>
+            <li><strong>POST action files</strong> (state-changing, under <code>public/actions/</code>):
+              <code>keyword-create.php</code>, <code>keyword-update.php</code>, <code>keyword-delete.php</code> →
+              post-redirect-get back to the list; <code>refresh.php</code> → returns JSON for the AJAX update (M3).</li>
+            <li>Every action file refuses non-POST and verifies CSRF before touching state.</li>
+            <li>No front controller, no <code>router.php</code>. <code>php -S localhost:8000 -t public</code> serves
+              everything directly.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Database guarantees (positions)</h4>
+          <ul>
+            <li><code>UNIQUE(keyword_id, recorded_on)</code> → one position per keyword per day (refresh upserts today's
+              row).</li>
+            <li><code>FOREIGN KEY (keyword_id) REFERENCES keywords(id) ON DELETE CASCADE</code> → deleting a keyword
+              removes its whole history.</li>
+            <li><code>PRAGMA foreign_keys = ON</code> set <strong>per connection</strong> in <code>src/db.php</code>
+              (SQLite default is off — easy to miss).</li>
+            <li><code>CHECK (position BETWEEN 1 AND 100)</code> → domain bound enforced in schema.</li>
+            <li>History = dated rows in <code>positions</code>; the <code>UNIQUE(keyword_id, recorded_on)</code>
+              constraint doubles as the index for history/trend lookups.</li>
+            <li><code>CREATE TABLE IF NOT EXISTS</code> + idempotent init.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Initial proposed structure (superseded)</h3>
+      <div class="tree">public/index.php, public/keyword.php # GET entries
+        public/actions/{keyword-create,keyword-update,keyword-delete,refresh}.php # POST
+        public/assets/{app.css,app.js}
+        lib/{db,csrf,repo,trend}.php
+        views/{layout,list,detail}.php
+        seed.php, data/.gitkeep, .gitignore, README.md, AGENTS.md, process/notes.md</div>
+
+      <p class="small muted">This first cut proposed <code>lib/</code>, <code>views/</code>, and
+        <code>public/assets/</code>, but the build settled into a simpler layout — see the actual structure below.</p>
+
+      <h3>Actual structure (as built)</h3>
+      <div class="tree">src/{db,schema,seed,trend,keyword,list,session,refresh}.php # library + helpers
+        public/index.php, public/keyword.php, public/keyword-edit.php # GET entries
+        public/actions/{keyword-create,keyword-update,keyword-delete,refresh}.php # POST
+        public/style.css, public/js/refresh.js
+        bin/seed.php # CLI seed
+        tests/*.php # 17 standalone suites
+        config.php, AGENTS.md, README.md, .gitignore, data/.gitkeep</div>
+
+      <h3>Milestones (per the candidate brief) and how each was delivered</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Brief definition</th>
+            <th>Delivered as</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>M1</td>
+            <td><strong>Keywords CRUD:</strong> add/edit/delete the keywords (search phrases) tracked for one configured
+              website. Single-user app — <strong>no login</strong>.</td>
+            <td>Three sub-slices: keyword creation (form + CSRF + 303-PRG), then edit/delete with safe 404s and cascade
+              delete.</td>
+          </tr>
+          <tr>
+            <td>M2</td>
+            <td><strong>Seeded history:</strong> a seed script creates demo keywords with ~30 days of daily positions
+              (1–100).</td>
+            <td><code>bin/seed.php</code> + transactional <code>minirank_seed()</code> (6 keywords × 30 consecutive
+              days, idempotent), plus the seven-day trend logic.</td>
+          </tr>
+          <tr>
+            <td>M3</td>
+            <td><strong>Refresh simulation:</strong> a "Refresh positions" button generates today's positions
+              server-side and updates the page <strong>via AJAX, without a full page reload</strong>.</td>
+            <td>POST JSON endpoint (<code>public/actions/refresh.php</code>) with a same-day UPSERT, vanilla JS updating
+              cells in place, real-browser no-reload verification.</td>
+          </tr>
+          <tr>
+            <td>M4</td>
+            <td><strong>Keyword list:</strong> every keyword with its current position, a 7-day trend indicator
+              (improved / declined / stable), and a text search.</td>
+            <td><code>public/index.php</code> list + search with escaped output and LIKE-escaped queries.</td>
+          </tr>
+          <tr>
+            <td>M5</td>
+            <td><strong>Keyword detail:</strong> a page per keyword showing the position history as a table.</td>
+            <td><code>public/keyword.php</code> with newest-first history table, empty state, safe 404s.</td>
+          </tr>
+          <tr>
+            <td>M6</td>
+            <td><strong>Security basics:</strong> parameterized queries (no SQL built by string concatenation), escaped
+              output, and <strong>no secrets committed to the repository</strong>.</td>
+            <td>Enforced in every slice from the start (prepared statements only, <code>htmlspecialchars</code>
+              everywhere, POST-only + CSRF); confirmed end-to-end by the final security audit.</td>
+          </tr>
+          <tr>
+            <td>M7</td>
+            <td><strong>Runs in 5 minutes:</strong> README with setup steps, a seed command, and a one-command start
+              (<code>php -S ...</code> or <code>docker compose up</code>). Database: SQLite (recommended) or MySQL.</td>
+            <td>README with requirements, config, seed, one-command <code>php -S</code> start, and test instructions
+              (SQLite).</td>
+          </tr>
+          <tr>
+            <td>M8</td>
+            <td><strong>Responsive:</strong> usable at phone width. Functional beats beautiful — we are not grading
+              pixel-perfection.</td>
+            <td>CSS-only responsive pass, verified in headless Chrome at 375×812 with no page-level horizontal overflow.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="small muted">Build order differed from the milestone numbers: scaffold &rarr; database foundation &rarr;
+        M2 (seed/trend) &rarr; M4 (list/search) &rarr; M5 (detail) &rarr; M1 (create, then edit/delete) &rarr; M3
+        (refresh) &rarr; M8 (responsive) &rarr; final audit + M7 (README). M6 was built into every slice rather than as
+        a separate stage.</p>
+
+      <h3>Slice discipline</h3>
       <ul>
-        <li><strong>GET entry files</strong> (public pages): <code>public/index.php</code> (list + search), <code>public/keyword.php</code> (detail, <code>?id=</code>).</li>
-        <li><strong>POST action files</strong> (state-changing, under <code>public/actions/</code>): <code>keyword-create.php</code>, <code>keyword-update.php</code>, <code>keyword-delete.php</code> → post-redirect-get back to the list; <code>refresh.php</code> → returns JSON for the AJAX update (M3).</li>
-        <li>Every action file refuses non-POST and verifies CSRF before touching state.</li>
-        <li>No front controller, no <code>router.php</code>. <code>php -S localhost:8000 -t public</code> serves everything directly.</li>
+        <li><strong>Slice 1</strong> — scaffolding: <code>.gitignore</code>, <code>data/.gitkeep</code>,
+          <code>AGENTS.md</code> written up front from already-made decisions, so the conventions shaped every later
+          slice. Git/file-level verification only, no PHP yet.</li>
+        <li>Every slice was planned with the agent first (files, behavior, acceptance checks, verification commands),
+          reviewed before implementation, then verified against all existing suites plus its own new tests before
+          AGENTS.md was updated and the commit was made.</li>
+        <li>Each milestone shipped with dedicated unit tests, HTTP smoke tests against the PHP built-in server, and
+          CSRF/post-only/safe-404 coverage.</li>
       </ul>
-    </div>
-    <div class="card">
-      <h4>Database guarantees (positions)</h4>
+
+      <h3>What I would change in hindsight</h3>
       <ul>
-        <li><code>UNIQUE(keyword_id, recorded_on)</code> → one position per keyword per day (refresh upserts today's row).</li>
-        <li><code>FOREIGN KEY (keyword_id) REFERENCES keywords(id) ON DELETE CASCADE</code> → deleting a keyword removes its whole history.</li>
-        <li><code>PRAGMA foreign_keys = ON</code> set <strong>per connection</strong> in <code>src/db.php</code> (SQLite default is off — easy to miss).</li>
-        <li><code>CHECK (position BETWEEN 1 AND 100)</code> → domain bound enforced in schema.</li>
-        <li>History = dated rows in <code>positions</code>; the <code>UNIQUE(keyword_id, recorded_on)</code> constraint doubles as the index for history/trend lookups.</li>
-        <li><code>CREATE TABLE IF NOT EXISTS</code> + idempotent init.</li>
+        <li>Keep the same architecture — the split entry/action pattern and the per-connection
+          <code>PRAGMA foreign_keys</code> + constraint-backed schema were the right calls and held up across all eight
+          milestones.</li>
+        <li><strong>Decide less too early.</strong> Some conventions were locked before there was code to justify them;
+          several were only proven (or needed adjusting) once the first slices ran.</li>
+        <li><strong>Create the reusable test setup earlier.</strong> A shared helper for scratch DBs, seeding, and the
+          HTTP smoke harness would have saved repeated setup code across <code>tests/</code>.</li>
+        <li><strong>Record evidence as I go.</strong> I treated verification output as ephemeral instead of capturing it
+          next to each slice — see the Retrospective.</li>
       </ul>
-    </div>
-  </div>
+    </section>
 
-  <h3>Initial proposed structure (superseded)</h3>
-  <div class="tree">public/index.php, public/keyword.php          # GET entries
-public/actions/{keyword-create,keyword-update,keyword-delete,refresh}.php  # POST
-public/assets/{app.css,app.js}
-lib/{db,csrf,repo,trend}.php
-views/{layout,list,detail}.php
-seed.php, data/.gitkeep, .gitignore, README.md, AGENTS.md, process/notes.md</div>
+    <!-- ============================================================ -->
+    <section id="prompts">
+      <h2>2. Prompts &amp; fixes</h2>
 
-  <p class="small muted">This first cut proposed <code>lib/</code>, <code>views/</code>, and <code>public/assets/</code>, but the build settled into a simpler layout — see the actual structure below.</p>
+      <p>Three real prompts that shaped the build — including one that failed and was caught only by re-running the
+        tests myself — followed by the full session log.</p>
 
-  <h3>Actual structure (as built)</h3>
-  <div class="tree">src/{db,schema,seed,trend,keyword,list,session,refresh}.php  # library + helpers
-public/index.php, public/keyword.php, public/keyword-edit.php    # GET entries
-public/actions/{keyword-create,keyword-update,keyword-delete,refresh}.php  # POST
-public/style.css, public/js/refresh.js
-bin/seed.php            # CLI seed
-tests/*.php             # 11 standalone suites
-config.php, AGENTS.md, README.md, .gitignore, data/.gitkeep</div>
+      <!-- Prompt 1 -->
+      <div class="prompt">
+        <span class="label fail">Failed — caught by re-running tests</span>
+        <h3>Prompt 1 · Deterministic seed data and seven-day trend logic</h3>
+        <blockquote>
+          <p><em>&lt;role&gt; you are a brilliant senior PHP backend engineer responsible for a billion dollar company
+              data layer. Follow the project conventions in AGENTS.md and verify assumptions against PHP 8.0 and
+              SQLite.&lt;/role&gt;</em></p>
+          <p><em>plan the next slice: deterministic seed data and seven day trend logic. the seed must create six demo
+              keywords with 30 consecutive daily positions, completely safe when run repeatedly — do not create
+              duplicate keywords or dates. As per AGENTS.md trend uses current position and newest position on or before
+              seven days. LOWER IS BETTER. Cover improved, declined, stable and missing history cases. Include reusable
+              tests, files that will be affected, acceptance checks, exclusions. DONT EDIT FILES OR USE GIT</em></p>
+        </blockquote>
 
-  <h3>Milestones (per the candidate brief) and how each was delivered</h3>
-  <table>
-    <thead>
-      <tr><th>#</th><th>Brief definition</th><th>Delivered as</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>M1</td>
-        <td><strong>Keywords CRUD:</strong> add/edit/delete the keywords (search phrases) tracked for one configured website. Single-user app — <strong>no login</strong>.</td>
-        <td>Three sub-slices: keyword creation (form + CSRF + 303-PRG), then edit/delete with safe 404s and cascade delete.</td>
-      </tr>
-      <tr>
-        <td>M2</td>
-        <td><strong>Seeded history:</strong> a seed script creates demo keywords with ~30 days of daily positions (1–100).</td>
-        <td><code>bin/seed.php</code> + transactional <code>minirank_seed()</code> (6 keywords × 30 consecutive days, idempotent), plus the seven-day trend logic.</td>
-      </tr>
-      <tr>
-        <td>M3</td>
-        <td><strong>Refresh simulation:</strong> a "Refresh positions" button generates today's positions server-side and updates the page <strong>via AJAX, without a full page reload</strong>.</td>
-        <td>POST JSON endpoint (<code>public/actions/refresh.php</code>) with a same-day UPSERT, vanilla JS updating cells in place, real-browser no-reload verification.</td>
-      </tr>
-      <tr>
-        <td>M4</td>
-        <td><strong>Keyword list:</strong> every keyword with its current position, a 7-day trend indicator (improved / declined / stable), and a text search.</td>
-        <td><code>public/index.php</code> list + search with escaped output and LIKE-escaped queries.</td>
-      </tr>
-      <tr>
-        <td>M5</td>
-        <td><strong>Keyword detail:</strong> a page per keyword showing the position history as a table.</td>
-        <td><code>public/keyword.php</code> with newest-first history table, empty state, safe 404s.</td>
-      </tr>
-      <tr>
-        <td>M6</td>
-        <td><strong>Security basics:</strong> parameterized queries (no SQL built by string concatenation), escaped output, and <strong>no secrets committed to the repository</strong>.</td>
-        <td>Enforced in every slice from the start (prepared statements only, <code>htmlspecialchars</code> everywhere, POST-only + CSRF); confirmed end-to-end by the final security audit.</td>
-      </tr>
-      <tr>
-        <td>M7</td>
-        <td><strong>Runs in 5 minutes:</strong> README with setup steps, a seed command, and a one-command start (<code>php -S ...</code> or <code>docker compose up</code>). Database: SQLite (recommended) or MySQL.</td>
-        <td>README with requirements, config, seed, one-command <code>php -S</code> start, and test instructions (SQLite).</td>
-      </tr>
-      <tr>
-        <td>M8</td>
-        <td><strong>Responsive:</strong> usable at phone width. Functional beats beautiful — we are not grading pixel-perfection.</td>
-        <td>CSS-only responsive pass, verified in headless Chrome at 375×812 with no page-level horizontal overflow.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p class="small muted">Build order differed from the milestone numbers: scaffold &rarr; database foundation &rarr; M2 (seed/trend) &rarr; M4 (list/search) &rarr; M5 (detail) &rarr; M1 (create, then edit/delete) &rarr; M3 (refresh) &rarr; M8 (responsive) &rarr; final audit + M7 (README). M6 was built into every slice rather than as a separate stage.</p>
-
-  <h3>Slice discipline</h3>
-  <ul>
-    <li><strong>Slice 1</strong> — scaffolding: <code>.gitignore</code>, <code>data/.gitkeep</code>, <code>AGENTS.md</code> written up front from already-made decisions, so the conventions shaped every later slice. Git/file-level verification only, no PHP yet.</li>
-    <li>Every slice was planned with the agent first (files, behavior, acceptance checks, verification commands), reviewed before implementation, then verified against all existing suites plus its own new tests before AGENTS.md was updated and the commit was made.</li>
-    <li>Each milestone shipped with dedicated unit tests, HTTP smoke tests against the PHP built-in server, and CSRF/post-only/safe-404 coverage.</li>
-  </ul>
-
-  <h3>What I would change in hindsight</h3>
-  <ul>
-    <li>Keep the same architecture — the split entry/action pattern and the per-connection <code>PRAGMA foreign_keys</code> + constraint-backed schema were the right calls and held up across all eight milestones.</li>
-    <li><strong>Decide less too early.</strong> Some conventions were locked before there was code to justify them; several were only proven (or needed adjusting) once the first slices ran.</li>
-    <li><strong>Create the reusable test setup earlier.</strong> A shared helper for scratch DBs, seeding, and the HTTP smoke harness would have saved repeated setup code across <code>tests/</code>.</li>
-    <li><strong>Record evidence as I go.</strong> I treated verification output as ephemeral instead of capturing it next to each slice — see the Retrospective.</li>
-  </ul>
-</section>
-
-<!-- ============================================================ -->
-<section id="prompts">
-  <h2>2. Prompts &amp; fixes</h2>
-
-  <p>Three real prompts that shaped the build — including one that failed and was caught only by re-running the tests myself — followed by the full session log.</p>
-
-  <!-- Prompt 1 -->
-  <div class="prompt">
-    <span class="label fail">Failed — caught by re-running tests</span>
-    <h3>Prompt 1 · Deterministic seed data and seven-day trend logic</h3>
-    <blockquote>
-      <p><em>&lt;role&gt; you are a brilliant senior PHP backend engineer responsible for a billion dollar company data layer. Follow the project conventions in AGENTS.md and verify assumptions against PHP 8.0 and SQLite.&lt;/role&gt;</em></p>
-      <p><em>plan the next slice: deterministic seed data and seven day trend logic. the seed must create six demo keywords with 30 consecutive daily positions, completely safe when run repeatedly — do not create duplicate keywords or dates. As per AGENTS.md trend uses current position and newest position on or before seven days. LOWER IS BETTER. Cover improved, declined, stable and missing history cases. Include reusable tests, files that will be affected, acceptance checks, exclusions. DONT EDIT FILES OR USE GIT</em></p>
-    </blockquote>
-
-    <div class="mistake">
-      <strong>What the AI got wrong:</strong> The agent reported the tests successful and clean. When I ran the run commands myself, <code>php tests/seed_trend_test.php</code> reported <strong>34 passed, 1 failed, plus an <code>unlink</code> warning</strong>. The agent's summary asserted success it hadn't actually achieved, and the unlink warning meant a temp file cleanup path was wrong — a signal that files could be left behind.
-    </div>
-    <div class="caught">
-      <strong>How I caught it:</strong> I never trust a "tests pass" summary — I ran the exact test command from the agent's own verification list and compared the output. The mismatch (34/1 + warning) was the discrepancy that forced the fix.
-    </div>
-    <div class="fix">
-      <strong>The fix (follow-up prompt):</strong> <em>"for the seed_trend_test.php 34 passed but one failed with an unlink warning. diagnose and fix. make sure atomicity tests cause failures on a fresh database so we can diagnose. make sure no raw exception details are exposed. run every lint SEPARATELY then both complete test suites. update AGENTS.md after everything passes with no warnings or leftover files. stay within this slice. DO NOT USE GIT."</em><br>
-      The agent then fixed the failing check and the unlink warning, made the atomicity tests fail loudly on a fresh DB, ran each lint separately, ran both suites to green with no warnings or leftover temp files, and updated AGENTS.md.
-    </div>
-  </div>
-
-  <!-- Prompt 2 -->
-  <div class="prompt">
-    <span class="label ok">Corrected by spec review</span>
-    <h3>Prompt 2 · M1 — Keyword edit and delete</h3>
-    <blockquote>
-      <p><em>&lt;role&gt; You are the best senior PHP engineer continuing MiniRank. read AGENTS.md, inspect the existing keyword, session, detail and code. you are well indulged in the cybersecurity field and your code is known to be impenetrable, safe, secure and concise.&lt;/role&gt;</em></p>
-      <p><em>plan this bounded slice to complete M1 | adding keyword edit and delete. must reuse all the existing ID parsing, phrase validation, CSRF, flash and database helpers. add escaped edit form and separate POST actions for update and delete. update must work with the existing rules and case insensitive cases, also allowing keyword to keep current phrase. delete means SQLite removes all related position history. handle invalid/missing/array/unknown/deleted IDs safely. Wrong methods return 405. missing and incorrect CSRF return 403 with no data changing. successful actions use 303 post/redirect/get. add specific tests, HTTP checks, and run every suite. deletion leaves no positions, deleted keyword RETURNS 404. stay within the scope M1 ONLY. use simplest PHP 8.0 design. list proposed files, acceptance checks, verification commands. DO NOT EDIT FILES OR USE GIT.</em></p>
-    </blockquote>
-
-    <div class="mistake">
-      <strong>What the AI got wrong:</strong> The agent's plan routed invalid/missing/<code>id[]</code>/unknown/deleted IDs to an <em>"Keyword not found."</em> error flash followed by a 303 redirect to <code>../index.php</code> — the wrong status for that case. 303 is reserved for successful changes and ordinary validation/duplicate failures; a not-found/malformed ID must be a <strong>safe 404</strong> on the edit page and both POST actions, with <strong>no mutation</strong>.
-    </div>
-    <div class="caught">
-      <strong>How I caught it:</strong> I read the agent's reported behavior against the safe-404 convention in AGENTS.md and the M1 brief ("deleted keyword RETURNS 404"). Error-flash-then-redirect contradicted both, and it would have made delete/edit smoke tests assert the wrong status.
-    </div>
-    <div class="fix">
-      <strong>The fix (follow-up prompt):</strong> <em>"correct the following: Invalid/missing/id[]/unknown/deleted id → error flash 'Keyword not found' → 303. return safe 404 from edit page and both POST actions, no mutation; 303 is for only successful changes and ordinary validation/duplicate failures. // MAKE SURE using tests that ONLY the deleted keyword's history disappears, other keywords remain, and global orphan count is 0. KEEP EVERYTHING ELSE UNCHANGED. DO NOT EDIT FILES OR USE GIT."</em><br>
-      The edit page and both POST endpoints then returned safe 404s for invalid/missing/array/unknown/deleted IDs with zero mutation, and the smoke tests asserted that deleting one keyword leaves other keywords and their seeded history untouched, with a global orphan-position count of 0.
-    </div>
-  </div>
-
-  <!-- Prompt 3 -->
-  <div class="prompt">
-    <span class="label ok">Bounded, correct on first pass</span>
-    <h3>Prompt 3 · M3 — Refresh positions with AJAX (no reload)</h3>
-    <blockquote>
-      <p><em>&lt;role&gt; you are the best PHP engineer in a trillion dollar company. continue MiniRank: read AGENTS.md and inspect the current application and tests before proposing anything. You are extremely knowledgeable in the domain of security and AJAX, and handle each and every single edge case perfectly.&lt;/role&gt;</em></p>
-      <p><em>PLAN the smallest complete M3 slice. add a refresh positions control that generates today's simulated positions server-side for all keywords and updates visible current positions and trend with vanilla JS without navigating or fully reloading the page. follow all database and security rules in AGENTS.md; handle keyword with no history, repeated refreshes, transaction failure, CSRF, wrong methods, safe JSON errors, browser request failure. include concise reusable tests, all existing verification suites, real-browser verification of the no-reload behavior; leave runtime data out of tests. list the suggested files, behaviors, acceptance checks, verification steps. stay within the slice. DO NOT EDIT FILES, DO NOT USE GIT.</em></p>
-    </blockquote>
-
-    <div class="caught">
-      <strong>Why this one mattered:</strong> The prompt pushed the whole slice to a pure planning stage (no edits, no git), which forced a complete acceptance checklist up front. The agent returned a tight design: a transactional same-day UPSERT (<code>INSERT ... ON CONFLICT (keyword_id, recorded_on) DO UPDATE</code>) in <code>src/refresh.php</code>, a POST-only JSON endpoint with 405/403/500 handling and <code>JSON_HEX_*</code>/<code>JSON_INVALID_UTF8_SUBSTITUTE</code> encoding, and vanilla JS (<code>public/js/refresh.js</code>) that updates table cells via <code>textContent</code> only on full success and never mutates the DOM on failure. The real-browser no-reload check was listed as a manual step and later confirmed in Chrome headless at phone width.
-    </div>
-  </div>
-
-  <h3>Session log — the full record</h3>
-  <p>One entry per session, in build order. Each links to the archived transcript (prompts, reasoning, tool calls, and outputs are all in the share). All sessions ran on <code>deepseek-v4-flash-free</code> through opencode, cost $0, and followed the same loop: plan &rarr; user correction/approval &rarr; implement &rarr; pre-commit audit &rarr; user commits and pushes. Click a session to expand its mistakes and corrections.</p>
-
-  <!-- S1 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/jmbhv50h">1 · Architecture planning and Git initialization</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 16, 2026 &middot; plan mode &middot; no commit (led to repo init)</p>
-      <div class="body">
-        <p>Read the candidate brief, produced a six-part analysis (scope, 11 easily-missed requirements, 3 backend options, recommendation, risks, build order), then the architecture record and the first-slice plan.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> The agent first proposed a single query-string front controller and a ±1 "stable" trend threshold — both overridden by my prompts (split GET entries / POST action files; no ±1 threshold). It also self-corrected when its repo structure draft missed <code>process/</code>. One assistant turn aborted mid-reply after I attached the brief and was re-asked more fully.
+        <div class="mistake">
+          <strong>What the AI got wrong:</strong> The agent reported the tests successful and clean. When I ran the run
+          commands myself, <code>php tests/seed_trend_test.php</code> reported <strong>34 passed, 1 failed, plus an
+            <code>unlink</code> warning</strong>. The agent's summary asserted success it hadn't actually achieved, and
+          the unlink warning meant a temp file cleanup path was wrong — a signal that files could be left behind.
+        </div>
+        <div class="caught">
+          <strong>How I caught it:</strong> I never trust a "tests pass" summary — I ran the exact test command from the
+          agent's own verification list and compared the output. The mismatch (34/1 + warning) was the discrepancy that
+          forced the fix.
+        </div>
+        <div class="fix">
+          <strong>The fix (follow-up prompt):</strong> <em>"for the seed_trend_test.php 34 passed but one failed with an
+            unlink warning. diagnose and fix. make sure atomicity tests cause failures on a fresh database so we can
+            diagnose. make sure no raw exception details are exposed. run every lint SEPARATELY then both complete test
+            suites. update AGENTS.md after everything passes with no warnings or leftover files. stay within this slice.
+            DO NOT USE GIT."</em><br>
+          The agent then fixed the failing check and the unlink warning, made the atomicity tests fail loudly on a fresh
+          DB, ran each lint separately, ran both suites to green with no warnings or leftover temp files, and updated
+          AGENTS.md.
         </div>
       </div>
-    </div>
-  </details>
 
-  <!-- S2 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/R0LxLdc0">2 · Repository hygiene — .gitignore and data/.gitkeep</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 16, 2026 &middot; commit <code>edca655</code> "initialise MiniRank repository"</p>
-      <div class="body">
-        <p>Created <code>.gitignore</code> (<code>data/*</code> ignored except <code>!data/.gitkeep</code>) and <code>data/.gitkeep</code>, then committed as the root commit.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> The agent's <code>.gitignore</code> draft included boilerplate for a JS/TypeScript project (node_modules, dist/build, npm/yarn/pnpm debug logs, tsbuildinfo) — unnecessary for this PHP-only repo, and I removed those entries manually. The first <code>git push</code> also failed because no remote was configured — the <code>origin</code> was added here and the push succeeded after I ran the remote commands.
+      <!-- Prompt 2 -->
+      <div class="prompt">
+        <span class="label ok">Corrected by spec review</span>
+        <h3>Prompt 2 · M1 — Keyword edit and delete</h3>
+        <blockquote>
+          <p><em>&lt;role&gt; You are the best senior PHP engineer continuing MiniRank. read AGENTS.md, inspect the
+              existing keyword, session, detail and code. you are well indulged in the cybersecurity field and your code
+              is known to be impenetrable, safe, secure and concise.&lt;/role&gt;</em></p>
+          <p><em>plan this bounded slice to complete M1 | adding keyword edit and delete. must reuse all the existing ID
+              parsing, phrase validation, CSRF, flash and database helpers. add escaped edit form and separate POST
+              actions for update and delete. update must work with the existing rules and case insensitive cases, also
+              allowing keyword to keep current phrase. delete means SQLite removes all related position history. handle
+              invalid/missing/array/unknown/deleted IDs safely. Wrong methods return 405. missing and incorrect CSRF
+              return 403 with no data changing. successful actions use 303 post/redirect/get. add specific tests, HTTP
+              checks, and run every suite. deletion leaves no positions, deleted keyword RETURNS 404. stay within the
+              scope M1 ONLY. use simplest PHP 8.0 design. list proposed files, acceptance checks, verification commands.
+              DO NOT EDIT FILES OR USE GIT.</em></p>
+        </blockquote>
+
+        <div class="mistake">
+          <strong>What the AI got wrong:</strong> The agent's plan routed
+          invalid/missing/<code>id[]</code>/unknown/deleted IDs to an <em>"Keyword not found."</em> error flash followed
+          by a 303 redirect to <code>../index.php</code> — the wrong status for that case. 303 is reserved for
+          successful changes and ordinary validation/duplicate failures; a not-found/malformed ID must be a <strong>safe
+            404</strong> on the edit page and both POST actions, with <strong>no mutation</strong>.
+        </div>
+        <div class="caught">
+          <strong>How I caught it:</strong> I read the agent's reported behavior against the safe-404 convention in
+          AGENTS.md and the M1 brief ("deleted keyword RETURNS 404"). Error-flash-then-redirect contradicted both, and
+          it would have made delete/edit smoke tests assert the wrong status.
+        </div>
+        <div class="fix">
+          <strong>The fix (follow-up prompt):</strong> <em>"correct the following: Invalid/missing/id[]/unknown/deleted
+            id → error flash 'Keyword not found' → 303. return safe 404 from edit page and both POST actions, no
+            mutation; 303 is for only successful changes and ordinary validation/duplicate failures. // MAKE SURE using
+            tests that ONLY the deleted keyword's history disappears, other keywords remain, and global orphan count is
+            0. KEEP EVERYTHING ELSE UNCHANGED. DO NOT EDIT FILES OR USE GIT."</em><br>
+          The edit page and both POST endpoints then returned safe 404s for invalid/missing/array/unknown/deleted IDs
+          with zero mutation, and the smoke tests asserted that deleting one keyword leaves other keywords and their
+          seeded history untouched, with a global orphan-position count of 0.
         </div>
       </div>
-    </div>
-  </details>
 
-  <!-- S3 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/hb4JzAR3">3 · Project conventions — AGENTS.md</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 16, 2026 &middot; commit <code>b6854a4</code> "Add projects rules"</p>
-      <div class="body">
-        <p>Built the repository's convention doc from my locked decisions: PHP 8.0 + PDO/SQLite stack, GET pages vs POST actions, prepared SQL / escaped output / POST-only + CSRF, data model (1–100 positions, unique per keyword per day, cascade delete, <code>YYYY-MM-DD</code>), the trend rule, small-slice workflow, and "I own all Git writes."</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> The first draft was intentionally minimal (respecting "when in doubt, omit"); my second prompt required the actual locked decisions, so the agent reconciled old vs new content and rewrote rather than inventing. Also flagged the <code>data/*</code> gotcha that runtime SQLite files would silently never be committed.
+      <!-- Prompt 3 -->
+      <div class="prompt">
+        <span class="label ok">Bounded, correct on first pass</span>
+        <h3>Prompt 3 · M3 — Refresh positions with AJAX (no reload)</h3>
+        <blockquote>
+          <p><em>&lt;role&gt; you are the best PHP engineer in a trillion dollar company. continue MiniRank: read
+              AGENTS.md and inspect the current application and tests before proposing anything. You are extremely
+              knowledgeable in the domain of security and AJAX, and handle each and every single edge case
+              perfectly.&lt;/role&gt;</em></p>
+          <p><em>PLAN the smallest complete M3 slice. add a refresh positions control that generates today's simulated
+              positions server-side for all keywords and updates visible current positions and trend with vanilla JS
+              without navigating or fully reloading the page. follow all database and security rules in AGENTS.md;
+              handle keyword with no history, repeated refreshes, transaction failure, CSRF, wrong methods, safe JSON
+              errors, browser request failure. include concise reusable tests, all existing verification suites,
+              real-browser verification of the no-reload behavior; leave runtime data out of tests. list the suggested
+              files, behaviors, acceptance checks, verification steps. stay within the slice. DO NOT EDIT FILES, DO NOT
+              USE GIT.</em></p>
+        </blockquote>
+
+        <div class="caught">
+          <strong>Why this one mattered:</strong> The prompt pushed the whole slice to a pure planning stage (no edits,
+          no git), which forced a complete acceptance checklist up front. The agent returned a tight design: a
+          transactional same-day UPSERT (<code>INSERT ... ON CONFLICT (keyword_id, recorded_on) DO UPDATE</code>) in
+          <code>src/refresh.php</code>, a POST-only JSON endpoint with 405/403/500 handling and
+          <code>JSON_HEX_*</code>/<code>JSON_INVALID_UTF8_SUBSTITUTE</code> encoding, and vanilla JS
+          (<code>public/js/refresh.js</code>) that updates table cells via <code>textContent</code> only on full success
+          and never mutates the DOM on failure. The real-browser no-reload check was listed as a manual step and later
+          confirmed in Chrome headless at phone width.
         </div>
       </div>
-    </div>
-  </details>
 
-  <!-- S4 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/f5RimQwB">4 · OpenCode permissions — opencode.json</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 16, 2026 &middot; commit <code>601e1a4</code> "Add opencode permissions"</p>
-      <div class="body">
-        <p>Planned and created <code>opencode.json</code>: block Git writes and dependency installs, allow read-only git inspection, default everything else to <code>ask</code>.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> The first proposal used a broad <code>php*: allow</code>; I corrected it to allow only read-only, non-executing PHP inspection (<code>php -l</code> etc.) and let everything else fall back to <code>ask</code> — no inline PHP. I verified the model live by having the agent "attempt" <code>npm --version</code> and confirm it was denied before executing.
+      <h3>Session log — the full record</h3>
+      <p>One entry per session, in build order. Each links to the archived transcript (prompts, reasoning, tool calls,
+        and outputs are all in the share). All sessions ran on <code>deepseek-v4-flash-free</code> through opencode,
+        cost $0, and followed the same loop: plan &rarr; user correction/approval &rarr; implement &rarr; pre-commit
+        audit &rarr; user commits and pushes. Click a session to expand its mistakes and corrections.</p>
+
+      <!-- S1 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/jmbhv50h">1 · Architecture planning and Git initialization</a>
+        </summary>
+        <div class="reveal">
+          <p class="meta">Aug 16, 2026 &middot; plan mode &middot; no commit (led to repo init)</p>
+          <div class="body">
+            <p>Read the candidate brief, produced a six-part analysis (scope, 11 easily-missed requirements, 3 backend
+              options, recommendation, risks, build order), then the architecture record and the first-slice plan.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The agent first proposed a single query-string front
+              controller and a ±1 "stable" trend threshold — both overridden by my prompts (split GET entries / POST
+              action files; no ±1 threshold). It also self-corrected when its repo structure draft missed
+              <code>process/</code>. One assistant turn aborted mid-reply after I attached the brief and was re-asked
+              more fully.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S5 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/547Z4ejE">5 · Seed data and seven-day trend logic</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17, 2026 &middot; commit <code>a254961</code> "Add seed data and trend logic" (M2)</p>
-      <div class="body">
-        <p>Implemented transactional <code>minirank_seed()</code> (6 keywords × 30 days, <code>INSERT OR IGNORE</code>, idempotent), the lower-is-better 7-day trend, the <code>bin/seed.php</code> CLI, and the first reusable test suites.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> This is the session behind the failed prompt above. The agent claimed tests were green, but <code>seed_trend_test.php</code> actually reported <strong>34 passed, 1 failed, plus an unlink warning</strong>. Root causes found on diagnosis: (1) the atomicity test used a trigger that inserted into a missing table to force a genuine error (it did not drop the table); under <code>INSERT OR IGNORE</code> inside a transaction the first attempt silently no-ops, so the test's error path was unreachable; (2) the <code>unlink</code> warning was a Windows file lock — leftover <code>PDOStatement</code> refs hold the SQLite file open, fixed by nulling statements + <code>gc_collect_cycles()</code> + a retry loop.
+      <!-- S2 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/R0LxLdc0">2 · Repository hygiene — .gitignore and data/.gitkeep</a>
+        </summary>
+        <div class="reveal">
+          <p class="meta">Aug 16, 2026 &middot; commit <code>edca655</code> "initialise MiniRank repository"</p>
+          <div class="body">
+            <p>Created <code>.gitignore</code> (<code>data/*</code> ignored except <code>!data/.gitkeep</code>) and
+              <code>data/.gitkeep</code>, then committed as the root commit.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The agent's <code>.gitignore</code> draft included
+              boilerplate for a JS/TypeScript project (node_modules, dist/build, npm/yarn/pnpm debug logs, tsbuildinfo)
+              — unnecessary for this PHP-only repo, and I removed those entries manually. The first
+              <code>git push</code> also failed because no remote was configured — the <code>origin</code> was added
+              here and the push succeeded after I ran the remote commands.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S6 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/Of4ibd67">6 · Keyword list and search</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17, 2026 &middot; commit <code>ff67fdf</code> "Add keyword list and search" (M4)</p>
-      <div class="body">
-        <p>GET list page with current position + 7-day trend and case-insensitive search, <code>config.php</code> for the one configured website, extracted the pure <code>minirank_trend_from_positions()</code> comparator, and added the list test suite (35 checks).</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> Recorded as M4, not M1, per my correction. One harness lesson: the smoke server polled for HTTP 200, but the bad-DB server correctly returned 500 on every request, so readiness never registered — treat any HTTP response as "up."
+      <!-- S3 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/hb4JzAR3">3 · Project conventions — AGENTS.md</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 16, 2026 &middot; commit <code>b6854a4</code> "Add projects rules"</p>
+          <div class="body">
+            <p>Built the repository's convention doc from my locked decisions: PHP 8.0 + PDO/SQLite stack, GET pages vs
+              POST actions, prepared SQL / escaped output / POST-only + CSRF, data model (1–100 positions, unique per
+              keyword per day, cascade delete, <code>YYYY-MM-DD</code>), the trend rule, small-slice workflow, and "I
+              own all Git writes."</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The first draft was intentionally minimal (respecting "when
+              in doubt, omit"); my second prompt required the actual locked decisions, so the agent reconciled old vs
+              new content and rewrote rather than inventing. Also flagged the <code>data/*</code> gotcha that runtime
+              SQLite files would silently never be committed.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S7 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/lQpvP0Wv">7 · Keyword detail and position history</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17, 2026 &middot; commit <code>93ca6ae</code> "Add keyword detail page" (M5)</p>
-      <div class="body">
-        <p>GET detail page with newest-first history, empty state, safe 404s for missing/invalid/array/negative/zero/unknown/deleted IDs, <code>minirank_parse_id()</code>, and unit + HTTP smoke suites (30 / 26 checks).</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> My pre-commit review found gaps the agent fixed: a genuinely-deleted ID was only tested at repo level (added the HTTP check), and <code>public/keyword.php</code> loaded config/src outside the <code>try</code> so an init failure could fatal instead of the generic 500 (moved init inside the try/catch). Windows harness fixes: <code>fread</code> blocks on non-blocking pipes, <code>proc_close</code> hangs after <code>proc_terminate</code> (use <code>taskkill /F</code>), and <code>ignore_errors=true</code> is needed to read 404/500 bodies.
+      <!-- S4 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/f5RimQwB">4 · OpenCode permissions — opencode.json</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 16, 2026 &middot; commit <code>601e1a4</code> "Add opencode permissions"</p>
+          <div class="body">
+            <p>Planned and created <code>opencode.json</code>: block Git writes and dependency installs, allow read-only
+              git inspection, default everything else to <code>ask</code>.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The first proposal used a broad <code>php*: allow</code>; I
+              corrected it to allow only read-only, non-executing PHP inspection (<code>php -l</code> etc.) and let
+              everything else fall back to <code>ask</code> — no inline PHP. I verified the model live by having the
+              agent "attempt" <code>npm --version</code> and confirm it was denied before executing.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S8 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/GVgZ0P7M">8 · Keyword creation, validation and CSRF</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17, 2026 &middot; commit <code>1d2cd01</code> "Add keyword creation" (M1)</p>
-      <div class="body">
-        <p>Add-keyword form, one-shot session flash, CSRF token (<code>hash_equals</code>, httponly + SameSite=Lax cookie), <code>public/actions/keyword-create.php</code> (405 / 403 / 303-PRG / 500), bound SQL, escaped output, and the create + create-smoke suites (39 / 41 checks).</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> A read-only audit of the slice found: the 403/405 pages linked <code>index.php</code> which resolved to a 404 <code>/actions/index.php</code> (must be <code>../index.php</code>), and the test leaked <code>$stmt</code> so three <code>minirank_create_test_*.sqlite</code> files stayed in <code>%TEMP%</code> (contradicting the "no leftover files" claim). Both fixed with regression checks. Harness lesson: PHP's stream wrapper follows 303s by default and consumes the one-shot flash before the assert — set <code>follow_location =&gt; 0</code>.
+      <!-- S5 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/547Z4ejE">5 · Seed data and seven-day trend logic</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17, 2026 &middot; commit <code>a254961</code> "Add seed data and trend logic" (M2)</p>
+          <div class="body">
+            <p>Implemented transactional <code>minirank_seed()</code> (6 keywords × 30 days,
+              <code>INSERT OR IGNORE</code>, idempotent), the lower-is-better 7-day trend, the <code>bin/seed.php</code>
+              CLI, and the first reusable test suites.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> This is the session behind the failed prompt above. The agent
+              claimed tests were green, but <code>seed_trend_test.php</code> actually reported <strong>34 passed, 1
+                failed, plus an unlink warning</strong>. Root causes found on diagnosis: (1) the atomicity test used a
+              trigger that inserted into a missing table to force a genuine error (it did not drop the table); under
+              <code>INSERT OR IGNORE</code> inside a transaction the first attempt silently no-ops, so the test's error
+              path was unreachable; (2) the <code>unlink</code> warning was a Windows file lock — leftover
+              <code>PDOStatement</code> refs hold the SQLite file open, fixed by nulling statements +
+              <code>gc_collect_cycles()</code> + a retry loop.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S9 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/pTPFjMQG">9 · Keyword editing and deletion</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17, 2026 &middot; commit <code>15edde9</code> "Add keyword editing and deletion" (M1)</p>
-      <div class="body">
-        <p>Edit page + two POST actions reusing the existing helpers: <code>minirank_update_keyword()</code> (find &rarr; validate &rarr; duplicate-excluding-self &rarr; UPDATE) and <code>minirank_delete_keyword()</code>, with position history cascading away on delete. Edit/delete + smoke suites (45 / 112 checks).</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> This is the second failed prompt above — the plan routed bad IDs to an error-flash 303 instead of a safe 404, and my follow-up corrected the guard order (405 &rarr; 403 &rarr; 404 no-mutation &rarr; 303 only for success/validation failures) and demanded orphan-count + survivor-history isolation tests. In-session: the agent broke <code>src/list.php</code> (removed an opening brace) and caught it immediately; the audit phase also found the update action 303'd on unknown/deleted IDs when it should 404.
+      <!-- S6 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/Of4ibd67">6 · Keyword list and search</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17, 2026 &middot; commit <code>ff67fdf</code> "Add keyword list and search" (M4)</p>
+          <div class="body">
+            <p>GET list page with current position + 7-day trend and case-insensitive search, <code>config.php</code>
+              for the one configured website, extracted the pure <code>minirank_trend_from_positions()</code>
+              comparator, and added the list test suite (35 checks).</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> Recorded as M4, not M1, per my correction. One harness
+              lesson: the smoke server polled for HTTP 200, but the bad-DB server correctly returned 500 on every
+              request, so readiness never registered — treat any HTTP response as "up."
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S10 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/jhiib3ZH">10 · AJAX position refresh</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 17–18, 2026 &middot; commit <code>2a9c3fa</code> "Add position refresh" (M3)</p>
-      <div class="body">
-        <p>POST JSON endpoint with transactional same-day UPSERT (<code>INSERT ... ON CONFLICT (keyword_id, recorded_on) DO UPDATE</code>), <code>minirank_drift_position()</code> random walk, vanilla JS that updates table cells via <code>textContent</code> only on full success, plus refresh + refresh-smoke suites (34 / 35 checks).</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> I corrected the plan: drift range is <code>-5..+5</code> (not <code>-1..+1</code>) with zero movement and boundary clamping valid; the atomicity test must snapshot the <em>complete</em> positions table (including pre-existing today rows) and prove it byte-identical after a forced failure. The agent hit a plan-mode block mid-implementation and I had to re-send the implement prompt. The audit found stale "M3 remains future work" lines in AGENTS.md that the implementation's own update had missed.
+      <!-- S7 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/lQpvP0Wv">7 · Keyword detail and position history</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17, 2026 &middot; commit <code>93ca6ae</code> "Add keyword detail page" (M5)</p>
+          <div class="body">
+            <p>GET detail page with newest-first history, empty state, safe 404s for
+              missing/invalid/array/negative/zero/unknown/deleted IDs, <code>minirank_parse_id()</code>, and unit + HTTP
+              smoke suites (30 / 26 checks).</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> My pre-commit review found gaps the agent fixed: a
+              genuinely-deleted ID was only tested at repo level (added the HTTP check), and
+              <code>public/keyword.php</code> loaded config/src outside the <code>try</code> so an init failure could
+              fatal instead of the generic 500 (moved init inside the try/catch). Windows harness fixes:
+              <code>fread</code> blocks on non-blocking pipes, <code>proc_close</code> hangs after
+              <code>proc_terminate</code> (use <code>taskkill /F</code>), and <code>ignore_errors=true</code> is needed
+              to read 404/500 bodies.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S11 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/z0k5xH0z">11 · Responsive phone-width layout</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 18, 2026 &middot; commit <code>65cd9a8</code> "Make site responsive on phones" (M8)</p>
-      <div class="body">
-        <p>CSS-only slice (<code>public/style.css</code>): <code>box-sizing</code> + <code>overflow-wrap</code> globally, one <code>@media (max-width: 480px)</code> block with full-width 44px touch targets, stacked controls, fixed table layouts. No PHP/JS/markup or dependency changes. Verified in headless Chrome at 375×812.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> Browser-harness bugs (all self-caught): the <code>-f</code> format operator misparsed a JS here-string, headless Chrome clamped the window to 500px so the media query never fired (fixed with <code>Emulation.setDeviceMetricsOverride</code>), and the wait raced <code>about:blank</code>. One check accidentally cleared <code>MINIRANK_DB_PATH</code> and read my live DB (12 keywords / 221 rows) — caught and re-verified against the scratch DB (6 / 180) before claiming the result.
+      <!-- S8 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/GVgZ0P7M">8 · Keyword creation, validation and CSRF</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17, 2026 &middot; commit <code>1d2cd01</code> "Add keyword creation" (M1)</p>
+          <div class="body">
+            <p>Add-keyword form, one-shot session flash, CSRF token (<code>hash_equals</code>, httponly + SameSite=Lax
+              cookie), <code>public/actions/keyword-create.php</code> (405 / 403 / 303-PRG / 500), bound SQL, escaped
+              output, and the create + create-smoke suites (39 / 41 checks).</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> A read-only audit of the slice found: the 403/405 pages
+              linked <code>index.php</code> which resolved to a 404 <code>/actions/index.php</code> (must be
+              <code>../index.php</code>), and the test leaked <code>$stmt</code> so three
+              <code>minirank_create_test_*.sqlite</code> files stayed in <code>%TEMP%</code> (contradicting the "no
+              leftover files" claim). Both fixed with regression checks. Harness lesson: PHP's stream wrapper follows
+              303s by default and consumes the one-shot flash before the assert — set
+              <code>follow_location =&gt; 0</code>.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S12 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/sdczrK3M">12 · Final security and verification audit</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 18, 2026 &middot; no commit (audit only; informed the README/setup commit <code>4e18393</code>)</p>
-      <div class="body">
-        <p>Read-only audit of every M1–M8 requirement mapped to code + evidence, tracing requests through SQL/HTML/redirects/sessions/CSRF/JSON/JS, plus all 11 suites run sequentially: <strong>475 checks, 475 passed, all exit 0</strong>, repo DB byte-identical before/after. Findings: no High; mediums were mostly doc/hygiene (stale AGENTS.md lines, no security response headers, cookie attributes unasserted, unvalidated <code>site_url</code> scheme). Cleaned exactly 7 pre-existing stale temp artifacts after verifying each path sat inside the Windows temp dir.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> The audit philosophy was "do not assume passing tests prove correct implementation" — probe beyond the suites. The <code>git ls-files</code> check was correctly denied by the git permission rule (proof the model works). A README finding was retracted once I confirmed setup docs are the planned M7 stage, not a defect.
+      <!-- S9 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/pTPFjMQG">9 · Keyword editing and deletion</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17, 2026 &middot; commit <code>15edde9</code> "Add keyword editing and deletion" (M1)</p>
+          <div class="body">
+            <p>Edit page + two POST actions reusing the existing helpers: <code>minirank_update_keyword()</code> (find
+              &rarr; validate &rarr; duplicate-excluding-self &rarr; UPDATE) and <code>minirank_delete_keyword()</code>,
+              with position history cascading away on delete. Edit/delete + smoke suites (45 / 112 checks).</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> This is the second failed prompt above — the plan routed bad
+              IDs to an error-flash 303 instead of a safe 404, and my follow-up corrected the guard order (405 &rarr;
+              403 &rarr; 404 no-mutation &rarr; 303 only for success/validation failures) and demanded orphan-count +
+              survivor-history isolation tests. In-session: the agent broke <code>src/list.php</code> (removed an
+              opening brace) and caught it immediately; the audit phase also found the update action 303'd on
+              unknown/deleted IDs when it should 404.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
+      </details>
 
-  <!-- S13 -->
-  <details class="session">
-    <summary><a href="https://opncd.ai/share/UnTjVr8R">13 · Process document — process.html</a></summary>
-    <div class="reveal">
-      <p class="meta">Aug 18, 2026 &middot; no commit yet (changes staged)</p>
-      <div class="body">
-        <p>Compiled <code>process.html</code> from this session: the Plan section (architecture decision, database guarantees, milestone table, hindsight notes), the Prompts &amp; fixes section (three real prompts including the failed seed/trend and 303-vs-404 corrections), the expandable session log, and the Retrospective. Corrected facts I got wrong along the way — the atomicity test used a trigger that inserted into a missing table (it did not drop the table), the constraint is <code>UNIQUE(keyword_id, recorded_on)</code>, and the original <code>.gitignore</code> draft's TypeScript/npm/yarn entries were removed by me.</p>
-        <div class="lessons">
-          <strong>Mistakes &amp; corrections:</strong> I mislabeled the initial proposed structure as "Revised structure" (re-labeled as superseded, actual structure shown), miswrote the uniqueness constraint as <code>UNIQUE(keyword_id, date)</code> (corrected to <code>recorded_on</code>), and initially described the atomicity fix as dropping the table (corrected — it was a trigger into a missing table). The user merged the standalone session log into the Prompts &amp; fixes section with expandable <code>&lt;details&gt;</code> entries.
+      <!-- S10 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/jhiib3ZH">10 · AJAX position refresh</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 17–18, 2026 &middot; commit <code>2a9c3fa</code> "Add position refresh" (M3)</p>
+          <div class="body">
+            <p>POST JSON endpoint with transactional same-day UPSERT
+              (<code>INSERT ... ON CONFLICT (keyword_id, recorded_on) DO UPDATE</code>),
+              <code>minirank_drift_position()</code> random walk, vanilla JS that updates table cells via
+              <code>textContent</code> only on full success, plus refresh + refresh-smoke suites (34 / 35 checks).</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> I corrected the plan: drift range is <code>-5..+5</code> (not
+              <code>-1..+1</code>) with zero movement and boundary clamping valid; the atomicity test must snapshot the
+              <em>complete</em> positions table (including pre-existing today rows) and prove it byte-identical after a
+              forced failure. The agent hit a plan-mode block mid-implementation and I had to re-send the implement
+              prompt. The audit found stale "M3 remains future work" lines in AGENTS.md that the implementation's own
+              update had missed.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </details>
-</section>
+      </details>
 
-<!-- ============================================================ -->
-<section id="retrospective">
-  <h2>3. Retrospective</h2>
+      <!-- S11 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/z0k5xH0z">11 · Responsive phone-width layout</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>65cd9a8</code> "Make site responsive on phones" (M8)</p>
+          <div class="body">
+            <p>CSS-only slice (<code>public/style.css</code>): <code>box-sizing</code> + <code>overflow-wrap</code>
+              globally, one <code>@media (max-width: 480px)</code> block with full-width 44px touch targets, stacked
+              controls, fixed table layouts. No PHP/JS/markup or dependency changes. Verified in headless Chrome at
+              375×812.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> Browser-harness bugs (all self-caught): the <code>-f</code>
+              format operator misparsed a JS here-string, headless Chrome clamped the window to 500px so the media query
+              never fired (fixed with <code>Emulation.setDeviceMetricsOverride</code>), and the wait raced
+              <code>about:blank</code>. One check accidentally cleared <code>MINIRANK_DB_PATH</code> and read my live DB
+              (12 keywords / 221 rows) — caught and re-verified against the scratch DB (6 / 180) before claiming the
+              result.
+            </div>
+          </div>
+        </div>
+      </details>
 
-  <h3>What I would do differently</h3>
-  <ul>
-    <li><strong>Have the agent summarize each slice immediately after finishing it</strong> — with the prompt(s) attached, plus every mistake, its fix, and the outcome — instead of reconstructing the record at the end. That lesson is what produced the session log in section 2.</li>
-    <li>Record evidence as I go: keep the lint/test outputs and HTTP smoke results alongside each slice's notes so nothing has to be re-run (or guessed) later.</li>
-    <li>Never accept a "tests pass" claim on trust — the seed/trend failure (34 passed, 1 failed, unlink warning) was only caught by running the exact command myself. Verify the agent's verification.</li>
-    <li>Create the reusable test setup earlier (shared scratch-DB, seeding, and HTTP smoke helpers) to cut repeated boilerplate across <code>tests/</code>.</li>
-    <li>Decide less too early; let the first slices prove the conventions before locking them into AGENTS.md.</li>
-    <li>Do the same architecture again: split GET entries from POST actions, per-connection <code>PRAGMA foreign_keys</code>, constraint-backed schema, CSRF on every mutation, and 303-PRG for success while reserving safe 404s for missing/unknown records.</li>
-  </ul>
+      <!-- S12 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/sdczrK3M">12 · Final security and verification audit</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; no commit (audit only; informed the README/setup commit
+            <code>4e18393</code>)</p>
+          <div class="body">
+            <p>Read-only audit of every M1–M8 requirement mapped to code + evidence, tracing requests through
+              SQL/HTML/redirects/sessions/CSRF/JSON/JS, plus all 11 suites run sequentially: <strong>475 checks, 475
+                passed, all exit 0</strong>, repo DB byte-identical before/after. Findings: no High; mediums were mostly
+              doc/hygiene (stale AGENTS.md lines, no security response headers, cookie attributes unasserted,
+              unvalidated <code>site_url</code> scheme). Cleaned exactly 7 pre-existing stale temp artifacts after
+              verifying each path sat inside the Windows temp dir.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The audit philosophy was "do not assume passing tests prove
+              correct implementation" — probe beyond the suites. The <code>git ls-files</code> check was correctly
+              denied by the git permission rule (proof the model works). A README finding was retracted once I confirmed
+              setup docs are the planned M7 stage, not a defect.
+            </div>
+          </div>
+        </div>
+      </details>
 
-  <h3>Time spent</h3>
-  <p>Roughly <strong>7 hours of focused work</strong> across the build: planning and scaffolding (architecture decision + AGENTS.md conventions), database foundation, M2 (seed/trend), M4 (list/search), M5 (detail), M1 (create, then edit/delete), M3 (refresh with real-browser no-reload verification), M8 (responsive), and the final audit + M7 (README) — including the unbudgeted rework from the seed/trend test failure and the edit/delete 404 correction.</p>
-  <p class="small muted">Estimate only — I did not time-box the sessions, and the edit/delete 404 correction plus the seed/trend test failure both consumed unbudgeted time that a "summarize each slice" habit would have surfaced sooner.</p>
-</section>
+      <!-- S13 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/UnTjVr8R">13 · Process document — process.html</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; no commit yet (changes staged)</p>
+          <div class="body">
+            <p>Compiled <code>process.html</code> from this session: the Plan section (architecture decision, database
+              guarantees, milestone table, hindsight notes), the Prompts &amp; fixes section (three real prompts
+              including the failed seed/trend and 303-vs-404 corrections), the expandable session log, and the
+              Retrospective. Corrected facts I got wrong along the way — the atomicity test used a trigger that inserted
+              into a missing table (it did not drop the table), the constraint is
+              <code>UNIQUE(keyword_id, recorded_on)</code>, and the original <code>.gitignore</code> draft's
+              TypeScript/npm/yarn entries were removed by me.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> I mislabeled the initial proposed structure as "Revised
+              structure" (re-labeled as superseded, actual structure shown), miswrote the uniqueness constraint as
+              <code>UNIQUE(keyword_id, date)</code> (corrected to <code>recorded_on</code>), and initially described the
+              atomicity fix as dropping the table (corrected — it was a trigger into a missing table). The user merged
+              the standalone session log into the Prompts &amp; fixes section with expandable
+              <code>&lt;details&gt;</code> entries.
+            </div>
+          </div>
+        </div>
+      </details>
 
-</main>
+      <!-- S14 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/WbKz1rsQ">14 · README and five-minute setup (M7)</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>4e18393</code> "Add setup instructions" (M7)</p>
+          <div class="body">
+            <p>Delivered the last milestone from the candidate brief: a README with requirements (PHP 8.0+ CLI with
+              <code>pdo_sqlite</code> and <code>session</code>), configuration (<code>config.php</code> site name/URL,
+              <code>MINIRANK_DB_PATH</code> override), the five-minute run path (<code>php bin/seed.php</code> then
+              <code>php -S 127.0.0.1:8000 -t public</code>), per-file test instructions for both POSIX and PowerShell,
+              and a troubleshooting section.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The audit in S12 had initially flagged the missing README as
+              a finding and then retracted it once setup docs were identified as the planned M7 stage — this session
+              delivered that stage. The Docker run path in the README was added later with the Docker slice (S18).
+            </div>
+          </div>
+        </div>
+      </details>
 
-<footer>MiniRank process document · PHP 8 + SQLite · no dependencies</footer>
+      <!-- S15 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/aUlLOpDa">15 · Movement filtering (S4)</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>93a4a85</code> "Add movement filter" (S4)</p>
+          <div class="body">
+            <p>Added an improved/declined/stable/not-enough-history movement filter to the list page:
+              <code>minirank_parse_movement()</code> whitelist treating missing/array/unknown values as inert,
+              <code>minirank_search_keywords()</code> applying the filter in PHP to the already-computed trend rows, and
+              a <code>movement</code> select combined with the <code>q</code> search in one GET form. Wrapped the list
+              in a stable <code>&lt;section id="results"&gt;</code> and taught the refresh endpoint plus
+              <code>refresh.js</code> to accept <code>q</code> + <code>movement</code>, so a filtered refresh rebuilds
+              the results container from the JSON and stale rows disappear while the status keeps showing the total
+              refreshed count. Added filter + filter_smoke suites (37 / 37 checks) and a real Chrome CDP audit of the
+              refresh.js success and failure paths (32 checks); all 11 prior suites still exit 0.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The refresh total is kept separate from the filtered keyword
+              count so the status message never misleads. <code>refresh.js</code> was reworked to rebuild the whole
+              <code>#results</code> container from the filtered JSON instead of patching individual cells, because with
+              movement filtering whole rows can appear or disappear on a refresh.
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- S16 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/5I2siFpF">16 · Keyword history line chart (S1)</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>106e998</code> "Add keyword history chart" (S1)</p>
+          <div class="body">
+            <p>Server-rendered inline SVG line chart on the detail page with zero JS or dependencies.
+              <code>minirank_chart_points()</code> computes the geometry (newest-first history reversed to oldest-first,
+              constant index spacing, inverted 1–100 y-scale so position 1 sits at the top, centered single point);
+              <code>minirank_render_chart()</code> emits a <code>&lt;figure class="chart"&gt;</code> with an escaped
+              date-range figcaption, a <code>viewBox="0 0 340 170"</code> SVG, gridlines and axis labels at positions 1
+              and 100, and a polyline plus one dot per point (exactly one dot with no polyline for a single point;
+              nothing for empty history). Added chart_test.php (27 checks) plus chart assertions in
+              keyword_smoke_test.php; all 13 prior suites still exit 0, and headless Chrome at 375×812 confirmed no
+              page-level horizontal overflow.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> Keeping the chart as pure server-side SVG with
+              <code>width:100%</code>/<code>height:auto</code> scaling meant the M8 phone-width guarantee held on the
+              detail page without any overflow hacks.
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- S17 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/TbHN1GFG">17 · CSV history export (S5)</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>af65131</code> "Export keyword history as CSV" (S5)</p>
+          <div class="body">
+            <p>Read-only GET export of a keyword's position history: <code>public/export.php</code> reuses the existing
+              ID parsing/finding/history helpers and streams <code>text/csv</code> with attachment + nosniff +
+              Content-Length headers, a safe 404 for any invalid/missing/unknown/deleted id, and a generic 500.
+              <code>src/export.php</code> provides <code>minirank_csv_cell()</code> (RFC 4180 quoting with
+              embedded-quote doubling and CR/LF handling), <code>minirank_csv_neutralize()</code> (prefixes leading
+              <code>= + - @</code> and tab/CR with a single quote to defeat spreadsheet formula injection),
+              <code>minirank_csv_rows()</code> (<code>Keyword,Date,Position</code> newest-first with defensive casts),
+              and <code>minirank_export_filename()</code> (fixed numeric <code>&lt;id&gt;-history.csv</code> so the
+              phrase never influences the filename). Added the Export CSV link to the detail page with zero CSS changes
+              (M8 untouched) and export + export_smoke suites (31 / 31 checks); all 16 prior suites still exit 0.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> Formula-injection neutralization and the fixed numeric
+              filename are the two details that keep a download endpoint safe; read-only GET keeps the endpoint
+              consistent with the search/detail pages rather than the POST-mutation rules.
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- S18 -->
+      <details class="session">
+        <summary><a href="https://opncd.ai/share/I48qZTrI">18 · Docker setup and persistence (S7)</a></summary>
+        <div class="reveal">
+          <p class="meta">Aug 18, 2026 &middot; commit <code>3293ea6</code> "Add Docker setup" (S7)</p>
+          <div class="body">
+            <p>Added a one-command Docker path: <code>Dockerfile</code> (<code>php:8.0-cli</code> with a build-time
+              check that <code>pdo_sqlite</code> and <code>session</code> are loaded, CRLF-strip + <code>chmod +x</code>
+              on the entrypoint), <code>docker-compose.yml</code> (single <code>app</code> service,
+              <code>MINIRANK_DB_PATH=/app/data/minirank.sqlite</code>, port 8000 with a <code>MINIRANK_PORT</code>
+              override, named volume <code>minirank-data</code>), <code>.dockerignore</code> (keeps <code>.git</code>,
+              <code>data</code>, <code>tests</code>, <code>.env*</code>, <code>*.md</code> out of the image), and
+              <code>docker/entrypoint.sh</code> (seeds only when the marker file is absent or the database is
+              missing/empty — a failed first-boot seed is retried on the next start while ordinary restarts never
+              restore deleted data — then <code>exec php -S 0.0.0.0:8000 -t public</code>).
+              <code>docker_smoke_test.php</code> (22 checks) builds, starts, and probes an isolated compose project,
+              proves SQLite persistence across <code>docker compose restart</code>, and tears down only its own project
+              via compose-project label filters; all 16 prior suites (649 checks) still exit 0.</p>
+            <div class="lessons">
+              <strong>Mistakes &amp; corrections:</strong> The seed-marker approach decouples "seed once" from "restart"
+              so deleted data is never resurrected, and the isolated-project cleanup discipline keeps the smoke test
+              from touching any unrelated Docker resources.
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="retrospective">
+      <h2>3. Retrospective</h2>
+
+      <h3>What I would do differently</h3>
+      <ul>
+        <li><strong>Have the agent summarize each slice immediately after finishing it</strong> — with the prompt(s)
+          attached, plus every mistake, its fix, and the outcome — instead of reconstructing the record at the end. That
+          lesson is what produced the session log in section 2.</li>
+        <li>Record evidence as I go: keep the lint/test outputs and HTTP smoke results alongside each slice's notes so
+          nothing has to be re-run (or guessed) later.</li>
+        <li>Never accept a "tests pass" claim on trust — the seed/trend failure (34 passed, 1 failed, unlink warning)
+          was only caught by running the exact command myself. Verify the agent's verification.</li>
+        <li>Create the reusable test setup earlier (shared scratch-DB, seeding, and HTTP smoke helpers) to cut repeated
+          boilerplate across <code>tests/</code>.</li>
+        <li>Decide less too early; let the first slices prove the conventions before locking them into AGENTS.md.</li>
+        <li>Do the same architecture again: split GET entries from POST actions, per-connection
+          <code>PRAGMA foreign_keys</code>, constraint-backed schema, CSRF on every mutation, and 303-PRG for success
+          while reserving safe 404s for missing/unknown records.</li>
+      </ul>
+
+      <h3>Time spent</h3>
+      <p>Roughly <strong>7 hours of focused work</strong> across the build: planning and scaffolding (architecture
+        decision + AGENTS.md conventions), database foundation, M2 (seed/trend), M4 (list/search), M5 (detail), M1
+        (create, then edit/delete), M3 (refresh with real-browser no-reload verification), M8 (responsive), and the
+        final audit + M7 (README) — including the unbudgeted rework from the seed/trend test failure and the edit/delete
+        404 correction.</p>
+      <p class="small muted">Estimate only — I did not time-box the sessions, and the edit/delete 404 correction plus
+        the seed/trend test failure both consumed unbudgeted time that a "summarize each slice" habit would have
+        surfaced sooner.</p>
+    </section>
+
+  </main>
+
+  <footer>MiniRank process document · PHP 8 + SQLite · no dependencies</footer>
 
 </body>
+
 </html>
