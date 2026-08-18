@@ -89,7 +89,8 @@ h1 {
   margin-bottom: 0.25rem;
 }
 
-.search input {
+.search input,
+.search select {
   padding: 0.35rem 0.5rem;
 }
 
@@ -190,7 +191,8 @@ table.history {
   }
 
   .add-form input[type="text"],
-  .search input[type="text"] {
+  .search input[type="text"],
+  .search select {
     width: 100%;
     min-height: 44px;
     font-size: 1rem;

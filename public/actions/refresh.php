@@ -31,7 +31,10 @@ try {
         minirank_refresh_json(403, 'Forbidden.');
     }
 
-    $result = minirank_refresh(minirank_db());
+    $query = isset($_POST['q']) && is_string($_POST['q']) ? trim($_POST['q']) : '';
+    $movement = minirank_parse_movement($_POST);
+
+    $result = minirank_refresh(minirank_db(), null, $query, $movement);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(
         ['ok' => true, 'refreshed' => $result['refreshed'], 'keywords' => $result['keywords']],

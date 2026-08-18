@@ -16,8 +16,12 @@ function minirank_drift_position(int $position, int $step): int
     return $position;
 }
 
-function minirank_refresh(PDO $pdo, ?string $today = null): array
-{
+function minirank_refresh(
+    PDO $pdo,
+    ?string $today = null,
+    string $query = '',
+    ?string $movement = null
+): array {
     $today = $today ?? date('Y-m-d');
 
     $keywords = [];
@@ -77,6 +81,6 @@ function minirank_refresh(PDO $pdo, ?string $today = null): array
 
     return [
         'refreshed' => count($keywords),
-        'keywords' => minirank_search_keywords($pdo, '', $today),
+        'keywords' => minirank_search_keywords($pdo, $query, $today, $movement),
     ];
 }

@@ -14,8 +14,27 @@ function minirank_like_pattern(string $query): string
     return '%' . minirank_like_escape($query) . '%';
 }
 
-function minirank_search_keywords(PDO $pdo, string $query, ?string $today = null): array
+function minirank_parse_movement(array $input): ?string
 {
+    $value = $input['movement'] ?? null;
+    if (!is_string($value)) {
+        return null;
+    }
+    $allowed = [
+        MINIRANK_TREND_IMPROVED,
+        MINIRANK_TREND_DECLINED,
+        MINIRANK_TREND_STABLE,
+        'not_enough_history',
+    ];
+    return in_array($value, $allowed, true) ? $value : null;
+}
+
+function minirank_search_keywords(
+    PDO $pdo,
+    string $query,
+    ?string $today = null,
+    ?string $movement = null
+): array {
     $query = trim($query);
     $today = $today ?? date('Y-m-d');
     $baselineDate = date('Y-m-d', strtotime($today . ' -7 days'));
@@ -57,15 +76,54 @@ function minirank_search_keywords(PDO $pdo, string $query, ?string $today = null
             'not_enough_history' => $trend['not_enough_history'],
         ];
     }
+
+    if ($movement !== null) {
+        $filtered = [];
+        foreach ($rows as $row) {
+            $keep = true;
+            if ($movement === MINIRANK_TREND_IMPROVED) {
+                $keep = $row['direction'] === MINIRANK_TREND_IMPROVED;
+            } elseif ($movement === MINIRANK_TREND_DECLINED) {
+                $keep = $row['direction'] === MINIRANK_TREND_DECLINED;
+            } elseif ($movement === MINIRANK_TREND_STABLE) {
+                $keep = $row['direction'] === MINIRANK_TREND_STABLE
+                    && $row['not_enough_history'] === false;
+            } elseif ($movement === 'not_enough_history') {
+                $keep = $row['not_enough_history'] === true;
+            }
+            if ($keep) {
+                $filtered[] = $row;
+            }
+        }
+        $rows = $filtered;
+    }
+
     return $rows;
 }
 
-function minirank_render_search(string $query): string
+function minirank_render_search(string $query, ?string $movement = null): string
 {
     $value = htmlspecialchars($query, ENT_QUOTES, 'UTF-8');
+    $options = [
+        '' => 'Any movement',
+        MINIRANK_TREND_IMPROVED => 'Improved',
+        MINIRANK_TREND_DECLINED => 'Declined',
+        MINIRANK_TREND_STABLE => 'Stable',
+        'not_enough_history' => 'Not enough history',
+    ];
+    $select = '<label for="movement">Movement</label><select id="movement" name="movement">';
+    foreach ($options as $key => $label) {
+        $selected = $movement === $key ? ' selected' : '';
+        $select .= '<option value="' . htmlspecialchars($key, ENT_QUOTES, 'UTF-8') . '"'
+            . $selected . '>'
+            . htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+            . '</option>';
+    }
+    $select .= '</select>';
     return '<form method="get" action="" class="search">'
         . '<label for="q">Search keywords</label>'
         . '<input type="text" id="q" name="q" value="' . $value . '">'
+        . $select
         . '<button type="submit">Search</button>'
         . '</form>';
 }
