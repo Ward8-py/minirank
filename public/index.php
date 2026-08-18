@@ -35,6 +35,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') ?> &middot; Keyword Rankings</title>
     <link rel="stylesheet" href="style.css">
+    <script src="js/refresh.js" defer></script>
 </head>
 <body>
     <header>
@@ -47,6 +48,7 @@ try {
         <?= minirank_flash_render($flash) ?>
         <?= minirank_render_add_form($csrfToken) ?>
         <?= minirank_render_search($query) ?>
+        <?= minirank_render_refresh_control($csrfToken) ?>
         <?= minirank_render_list($rows) ?>
     </main>
 </body>

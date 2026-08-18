@@ -70,6 +70,16 @@ function minirank_render_search(string $query): string
         . '</form>';
 }
 
+function minirank_render_refresh_control(string $csrfToken): string
+{
+    $token = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+    return '<div class="refresh-control">'
+        . '<button type="button" id="refresh-positions">Refresh positions</button>'
+        . '<input type="hidden" id="refresh-csrf" value="' . $token . '">'
+        . '<span id="refresh-status" role="status" aria-live="polite"></span>'
+        . '</div>';
+}
+
 function minirank_render_add_form(string $csrfToken): string
 {
     $token = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
@@ -131,10 +141,10 @@ function minirank_render_list(array $rows): string
         $label = $row['not_enough_history']
             ? $direction . ' (not enough history)'
             : $direction;
-        $html .= '<tr>'
+        $html .= '<tr data-keyword-id="' . (int) $row['id'] . '">'
             . '<td><a href="' . $detailUrl . '">' . $phrase . '</a></td>'
             . '<td class="position">' . $current . '</td>'
-            . '<td class="trend-' . $direction . '">'
+            . '<td class="trend trend-' . $direction . '">'
             . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</td>'
             . '</tr>';
     }
